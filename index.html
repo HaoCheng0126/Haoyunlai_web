@@ -488,6 +488,49 @@
   .petsw.active{ color:var(--accent,#007aff); font-weight:700; }
   .petsw.active .petsw-ava{ box-shadow:0 0 0 2.5px var(--accent,#007aff); }
   .petsw-hint{ margin-left:auto; font-size:.74rem; color:var(--ink-3,#8a8a8e); align-self:center; }
+  /* 配置中心 modal */
+  .cfg-modal{ position:fixed; inset:0; z-index:200; display:flex; align-items:center; justify-content:center; padding:16px; background:rgba(0,0,0,.42); backdrop-filter:blur(3px); }
+  .cfg-modal[hidden]{ display:none; }
+  .cfg-card{ width:100%; max-width:460px; max-height:88vh; display:flex; flex-direction:column; background:var(--card,#fff); border-radius:20px; box-shadow:0 24px 60px -12px rgba(0,0,0,.4); overflow:hidden; font-family:var(--font); }
+  .cfg-head{ display:flex; align-items:center; justify-content:space-between; padding:14px 18px; border-bottom:1px solid rgba(0,0,0,.07); }
+  .cfg-title{ font-weight:800; font-size:1.02rem; color:var(--ink,#1d1d1f); }
+  .cfg-x{ border:none; background:var(--fill,#eee); width:30px; height:30px; border-radius:9px; font-size:.9rem; cursor:pointer; color:var(--ink-2,#6e6e73); }
+  .cfg-x:active{ transform:scale(.92); }
+  .cfg-body{ flex:1 1 auto; overflow-y:auto; padding:6px 18px 10px; -webkit-overflow-scrolling:touch; }
+  .cfg-sec{ padding:14px 0; border-bottom:1px solid rgba(0,0,0,.06); }
+  .cfg-sec:last-child{ border-bottom:none; }
+  .cfg-sec h3{ margin:0 0 10px; font-size:.9rem; color:var(--ink,#1d1d1f); font-weight:700; }
+  .cfg-sec-head{ display:flex; align-items:center; justify-content:space-between; }
+  .cfg-sec-head h3{ margin:0; }
+  .cfg-hint{ margin:6px 0 10px; font-size:.76rem; color:var(--ink-3,#8e8e93); }
+  .cfg-add{ border:1px solid var(--accent,#007aff); background:transparent; color:var(--accent,#007aff); border-radius:12px; padding:4px 11px; font-size:.78rem; font-weight:600; cursor:pointer; font-family:var(--font); }
+  .cfg-add:active{ transform:scale(.95); }
+  .cfg-moods{ display:flex; flex-direction:column; gap:8px; }
+  .cfg-mood{ display:flex; align-items:center; gap:10px; }
+  .cfg-mood-face{ flex:0 0 auto; width:46px; height:46px; border-radius:11px; background-color:var(--fill,#f0f0f4); background-size:cover; background-position:center; cursor:pointer; border:1px dashed rgba(0,0,0,.2); position:relative; }
+  .cfg-mood-face.has-img{ border:1px solid rgba(0,0,0,.08); }
+  .cfg-mood-face:not(.has-img)::after{ content:"＋"; position:absolute; inset:0; display:grid; place-items:center; color:var(--ink-3,#8e8e93); font-size:1.2rem; }
+  .cfg-mood > input{ flex:1 1 auto; min-width:0; border:1px solid rgba(0,0,0,.14); border-radius:10px; padding:8px 11px; font-family:var(--font); font-size:.88rem; color:var(--ink,#1d1d1f); outline:none; }
+  .cfg-mood > input:focus{ border-color:var(--accent,#007aff); }
+  .cfg-mood-del{ flex:0 0 auto; border:none; background:var(--fill,#eee); color:var(--ink-2,#6e6e73); width:28px; height:28px; border-radius:8px; font-size:.95rem; cursor:pointer; }
+  .cfg-row{ display:flex; align-items:center; gap:12px; margin-bottom:9px; }
+  .cfg-row label{ flex:0 0 76px; font-size:.84rem; color:var(--ink-2,#6e6e73); }
+  .cfg-row input, .cfg-row select{ flex:1 1 auto; min-width:0; border:1px solid rgba(0,0,0,.14); border-radius:10px; padding:8px 11px; font-family:var(--font); font-size:.88rem; color:var(--ink,#1d1d1f); outline:none; background:var(--card,#fff); }
+  .cfg-row input:focus, .cfg-row select:focus{ border-color:var(--accent,#007aff); }
+  .cfg-pet{ padding:11px 0; border-top:1px dashed rgba(0,0,0,.1); }
+  .cfg-pet:first-child{ border-top:none; padding-top:2px; }
+  .cfg-petname{ display:flex; align-items:center; gap:10px; margin-bottom:7px; }
+  .cfg-petname b{ font-size:.82rem; color:var(--ink-3,#8e8e93); flex:0 0 auto; }
+  .cfg-petname input{ flex:1 1 auto; min-width:0; border:1px solid rgba(0,0,0,.14); border-radius:10px; padding:7px 10px; font-family:var(--font); font-size:.86rem; color:var(--ink,#1d1d1f); outline:none; }
+  .cfg-pet textarea{ width:100%; box-sizing:border-box; min-height:76px; border:1px solid rgba(0,0,0,.14); border-radius:10px; padding:9px 11px; font-family:var(--font); font-size:.82rem; line-height:1.5; color:var(--ink,#1d1d1f); outline:none; resize:vertical; }
+  .cfg-pet textarea:focus, .cfg-petname input:focus{ border-color:var(--accent,#007aff); }
+  .cfg-foot{ display:flex; align-items:center; gap:9px; padding:12px 18px; border-top:1px solid rgba(0,0,0,.08); background:var(--card-2,#f7f7fa); }
+  .cfg-pw{ flex:0 0 118px; border:1px solid rgba(0,0,0,.16); border-radius:10px; padding:8px 11px; font-family:var(--font); font-size:.84rem; color:var(--ink,#1d1d1f); outline:none; }
+  .cfg-pw:focus{ border-color:var(--accent,#007aff); }
+  .cfg-status{ flex:1 1 auto; font-size:.78rem; color:var(--ink-3,#8e8e93); }
+  .cfg-status.ok{ color:#34c759; } .cfg-status.err{ color:#ff3b30; }
+  .cfg-save{ flex:0 0 auto; border:none; background:var(--accent,#007aff); color:#fff; border-radius:11px; padding:9px 16px; font-size:.86rem; font-weight:700; cursor:pointer; font-family:var(--font); }
+  .cfg-save:active{ transform:scale(.96); }
   @media (max-width:480px){
     .chat-page{ padding:12px; min-height:56vh; }
     .chat-log{ max-height:52vh; }
@@ -685,8 +728,8 @@
     <div id="view-chat" class="mode-view" role="tabpanel" aria-label="和月薪喵唠嗑" hidden>
       <div class="chat-page">
         <div class="pet-switch" id="petSwitch">
-          <button type="button" class="petsw" data-pet="yuexinmiao"><i class="petsw-ava" style="--sheet:url('pet/yuexinmiao.webp')"></i>月薪喵</button>
-          <button type="button" class="petsw" data-pet="haoyunlai"><i class="petsw-ava" style="--sheet:url('pet/haoyunlai.webp')"></i>好运来</button>
+          <button type="button" class="petsw" data-pet="yuexinmiao"><i class="petsw-ava" style="--sheet:url('pet/yuexinmiao.webp')"></i><span class="petsw-name">月薪喵</span></button>
+          <button type="button" class="petsw" data-pet="haoyunlai"><i class="petsw-ava" style="--sheet:url('pet/haoyunlai.webp')"></i><span class="petsw-name">好运来</span></button>
           <span class="petsw-hint">点头像换个搭子~</span>
         </div>
         <div class="chat-log" id="chatLog" role="log" aria-live="polite"></div>
@@ -736,6 +779,39 @@
       <button id="petChatSend" type="submit" aria-label="发送">➤</button>
     </form>
     <div class="pet-sprite" id="petSprite" role="button" tabindex="0" title="月薪喵 · 戳我说话，拖我换位置"></div>
+  </div>
+
+  <!-- 配置中心（隐藏入口：连点顶部标题 5 下）-->
+  <div id="configModal" class="cfg-modal" hidden aria-label="配置中心">
+    <div class="cfg-card">
+      <div class="cfg-head">
+        <span class="cfg-title">⚙️ 配置中心</span>
+        <button type="button" class="cfg-x" id="cfgClose" aria-label="关闭">✕</button>
+      </div>
+      <div class="cfg-body">
+        <section class="cfg-sec">
+          <div class="cfg-sec-head"><h3>😀 心情表情</h3><button type="button" class="cfg-add" id="cfgAddMood">＋ 加一个</button></div>
+          <p class="cfg-hint">点左边方块换图、改右边名字。你和 ta 看到同一套。</p>
+          <div id="cfgMoods" class="cfg-moods"></div>
+        </section>
+        <section class="cfg-sec">
+          <h3>🐱 桌宠设置</h3>
+          <div class="cfg-row"><label>上班时间</label><input type="time" id="cfgWorkStart"></div>
+          <div class="cfg-row"><label>下班时间</label><input type="time" id="cfgWorkEnd"></div>
+          <div class="cfg-row"><label>天气城市</label><input type="text" id="cfgWeather" placeholder="成都武侯区" maxlength="20"></div>
+          <div class="cfg-row"><label>默认形象</label><select id="cfgActivePet"></select></div>
+        </section>
+        <section class="cfg-sec">
+          <h3>💬 桌宠人设</h3>
+          <div id="cfgPets"></div>
+        </section>
+      </div>
+      <div class="cfg-foot">
+        <input type="password" id="cfgPw" class="cfg-pw" placeholder="上传密码" autocomplete="off">
+        <span class="cfg-status" id="cfgStatus"></span>
+        <button type="button" class="cfg-save" id="cfgSave">保存并同步</button>
+      </div>
+    </div>
   </div>
 
 <script>
@@ -1711,32 +1787,123 @@
   var moodPics = (function(){ try{ return JSON.parse(localStorage.getItem(MOODPIC_KEY)) || {}; }catch(e){ return {}; } })();
   function saveMoodPics(){ try{ localStorage.setItem(MOODPIC_KEY, JSON.stringify(moodPics)); }catch(e){} }
 
-  // ---- 共享同步：干饭心情配置存服务器 /moodpics，你俩自助传、互相看到（本地无后端则静默降级）----
-  var MOODPW_KEY = "moyu-food-uploadpw-v1";
-  function pullMoodConfig(){
-    fetch("/moodpics").then(function(r){ return r.ok ? r.json() : null; }).then(function(d){
-      if(!d) return;
-      var changed = false;
-      if(Array.isArray(d.moods) && d.moods.length){
-        var c = d.moods.filter(function(m){ return m && m.id && typeof m.label === "string"; });
-        if(c.length){ moodList = c; saveMoods(); changed = true; }
-      }
-      if(d.pics && typeof d.pics === "object" && Object.keys(d.pics).length){ moodPics = d.pics; saveMoodPics(); changed = true; }
-      if(changed && typeof buildMoodChips === "function") buildMoodChips();
-    }).catch(function(){});
+  // ---- 配置中心：完整配置(表情图+文字 + agent)存服务器 /config，主 app 读取应用；本地无后端则静默 ----
+  var CONFIGPW_KEY = "moyu-config-pw-v1";
+  function applyConfig(cfg){
+    if(!cfg || typeof cfg !== "object") return;
+    window.APP_CONFIG = cfg;
+    var changed = false;
+    if(Array.isArray(cfg.moods) && cfg.moods.length){
+      var c = cfg.moods.filter(function(m){ return m && m.id && typeof m.label === "string"; });
+      if(c.length){ moodList = c; saveMoods(); changed = true; }
+    }
+    if(cfg.pics && typeof cfg.pics === "object"){ moodPics = cfg.pics; saveMoodPics(); changed = true; }
+    if(changed && typeof buildMoodChips === "function") buildMoodChips();
+    var ag = cfg.agent || {};
+    if(ag.weatherCity){ WEATHER_CITY = ag.weatherCity; }         // 天气城市
+    if(window.petApplyConfig) window.petApplyConfig(ag);         // 桌宠 agent 设置（跨作用域桥接）
   }
-  function pushMoodConfig(retry){
-    var pw = localStorage.getItem(MOODPW_KEY) || "";
-    fetch("/moodpics", { method:"POST", headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify({ moods: moodList, pics: moodPics, pw: pw }) })
-      .then(function(r){
-        if(r.status === 403 && !retry){          // 密码不对/没设 → 问一次再重试
-          var np = (window.prompt("上传密码（和对方用同一个，设了才会同步给 ta）：") || "").trim();
-          if(np){ localStorage.setItem(MOODPW_KEY, np); pushMoodConfig(true); }
-          else localStorage.removeItem(MOODPW_KEY);
-        }
-      }).catch(function(){});   // 离线/本地无后端：本地已存，静默
+  function pullConfig(){
+    fetch("/config").then(function(r){ return r.ok ? r.json() : null; }).then(function(cfg){ if(cfg) applyConfig(cfg); }).catch(function(){});
   }
+  function postConfig(cfg, onDone){   // 配置面板保存用（带密码）
+    var pw = localStorage.getItem(CONFIGPW_KEY) || "";
+    fetch("/config", { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify({ config: cfg, pw: pw }) })
+      .then(function(r){ return r.json().then(function(j){ return { status:r.status, body:j }; }).catch(function(){ return { status:r.status, body:{} }; }); })
+      .then(function(res){
+        if(res.status === 403){ localStorage.removeItem(CONFIGPW_KEY); onDone && onDone(false, "密码不对，重试"); }
+        else if(res.status === 200 && res.body && res.body.ok){ onDone && onDone(true, res.body); }
+        else onDone && onDone(false, (res.body && res.body.error) || ("HTTP " + res.status));
+      }).catch(function(){ onDone && onDone(false, "连不上服务器（后端没起？）"); });
+  }
+  var onMoodPicChange = null;   // 上传图后通知配置面板刷新（onMoodFile 里回调）
+
+  // ---- 配置面板控制器 ----
+  (function(){
+    var modal = document.getElementById("configModal");
+    if(!modal) return;
+    var elMoods = document.getElementById("cfgMoods"), elPets = document.getElementById("cfgPets");
+    var elActivePet = document.getElementById("cfgActivePet"), elWorkStart = document.getElementById("cfgWorkStart");
+    var elWorkEnd = document.getElementById("cfgWorkEnd"), elWeather = document.getElementById("cfgWeather");
+    var elPw = document.getElementById("cfgPw"), elStatus = document.getElementById("cfgStatus");
+    function status(msg, cls){ elStatus.textContent = msg || ""; elStatus.className = "cfg-status" + (cls ? " " + cls : ""); }
+
+    function renderMoods(){
+      elMoods.innerHTML = "";
+      moodList.forEach(function(mo){
+        var k = mo.id;
+        var row = document.createElement("div"); row.className = "cfg-mood";
+        var face = document.createElement("div"); face.className = "cfg-mood-face" + (moodPics[k] ? " has-img" : "");
+        if(moodPics[k]) face.style.backgroundImage = "url(" + moodPics[k] + ")";
+        face.title = "点我换图";
+        face.addEventListener("click", function(){ pendingMood = k; if(moodFileInput){ moodFileInput.value = ""; moodFileInput.click(); } });
+        var inp = document.createElement("input"); inp.type = "text"; inp.value = mo.label; inp.maxLength = 16; inp.placeholder = "名字";
+        inp.addEventListener("change", function(){ mo.label = (inp.value || "").trim() || mo.label; inp.value = mo.label; saveMoods(); if(typeof buildMoodChips === "function") buildMoodChips(); });
+        var del = document.createElement("button"); del.type = "button"; del.className = "cfg-mood-del"; del.textContent = "×"; del.title = "删除";
+        del.addEventListener("click", function(){ moodList = moodList.filter(function(m){ return m.id !== k; }); if(moodPics[k]){ delete moodPics[k]; saveMoodPics(); } saveMoods(); if(typeof buildMoodChips === "function") buildMoodChips(); renderMoods(); });
+        row.appendChild(face); row.appendChild(inp); row.appendChild(del);
+        elMoods.appendChild(row);
+      });
+    }
+    onMoodPicChange = function(){ if(!modal.hidden) renderMoods(); };
+
+    function renderAgent(){
+      var ac = (window.petGetConfig && window.petGetConfig()) || { pets:{}, order:[], workStart:"08:45", workEnd:"18:00", activePet:"" };
+      var order = ac.order && ac.order.length ? ac.order : Object.keys(ac.pets);
+      elWorkStart.value = ac.workStart || "08:45";
+      elWorkEnd.value = ac.workEnd || "18:00";
+      elWeather.value = ((window.APP_CONFIG || {}).agent || {}).weatherCity || "";
+      elActivePet.innerHTML = "";
+      order.forEach(function(pid){
+        var op = document.createElement("option"); op.value = pid; op.textContent = (ac.pets[pid] && ac.pets[pid].name) || pid;
+        if(pid === ac.activePet) op.selected = true; elActivePet.appendChild(op);
+      });
+      elPets.innerHTML = "";
+      order.forEach(function(pid){
+        var p = ac.pets[pid] || {};
+        var box = document.createElement("div"); box.className = "cfg-pet"; box.dataset.pet = pid;
+        var nameRow = document.createElement("div"); nameRow.className = "cfg-petname";
+        var b = document.createElement("b"); b.textContent = "名字";
+        var nameInp = document.createElement("input"); nameInp.type = "text"; nameInp.maxLength = 12; nameInp.value = p.name || ""; nameInp.className = "cfg-pet-name";
+        nameRow.appendChild(b); nameRow.appendChild(nameInp);
+        var ta = document.createElement("textarea"); ta.className = "cfg-pet-char"; ta.value = p.char || ""; ta.placeholder = "这个桌宠的性格/人设…";
+        box.appendChild(nameRow); box.appendChild(ta); elPets.appendChild(box);
+      });
+    }
+
+    function open(){ renderMoods(); renderAgent(); status(""); elPw.value = localStorage.getItem(CONFIGPW_KEY) || ""; modal.hidden = false; }
+    function close(){ modal.hidden = true; }
+    function save(){
+      var pw = (elPw.value || "").trim();
+      if(!pw){ status("先填上传密码", "err"); return; }
+      localStorage.setItem(CONFIGPW_KEY, pw);
+      var pets = {};
+      [].forEach.call(elPets.querySelectorAll(".cfg-pet"), function(box){
+        pets[box.dataset.pet] = { name:(box.querySelector(".cfg-pet-name").value || "").trim(), char:(box.querySelector(".cfg-pet-char").value || "").trim() };
+      });
+      var cfg = {
+        moods: moodList.map(function(m){ return { id:m.id, label:m.label }; }),
+        pics: moodPics,
+        agent: { workStart:elWorkStart.value || "08:45", workEnd:elWorkEnd.value || "18:00", weatherCity:(elWeather.value || "").trim(), activePet:elActivePet.value || "", pets:pets }
+      };
+      status("保存中…");
+      postConfig(cfg, function(ok, info){ if(ok){ status("已保存并同步 ✓", "ok"); applyConfig(cfg); } else { status("失败：" + info, "err"); } });
+    }
+
+    document.getElementById("cfgClose").addEventListener("click", close);
+    document.getElementById("cfgSave").addEventListener("click", save);
+    document.getElementById("cfgAddMood").addEventListener("click", function(){
+      if(moodList.length >= 10) return;
+      moodList.push({ id:"mood_" + Date.now(), label:"新心情" }); saveMoods();
+      if(typeof buildMoodChips === "function") buildMoodChips(); renderMoods();
+    });
+    modal.addEventListener("click", function(e){ if(e.target === modal) close(); });
+
+    // 隐藏入口：连点顶部 kicker 5 下
+    var trig = document.getElementById("brandKicker") || document.querySelector(".masthead");
+    if(trig){ var n = 0, t = null; trig.addEventListener("click", function(){ n++; if(t) clearTimeout(t); t = setTimeout(function(){ n = 0; }, 2500); if(n >= 5){ n = 0; open(); } }); }
+    window.openConfig = open;
+  })();
   var pendingMood = null, moodFileInput = null, moodEditMode = false;
 
   var RE_DESSERT = /甜品|甜点|糕|面包|烘焙|吐司|泡芙|布丁|可丽饼|华夫|班戟|慕斯|舒芙蕾|提拉米苏|马卡龙|冰淇淋|冰激凌|雪糕|糖水|甜甜圈|饼房|dessert|bakery/i;
@@ -1920,7 +2087,7 @@
         cv.getContext("2d").drawImage(img, 0, 0, cw, ch);
         try{ moodPics[k] = cv.toDataURL("image/jpeg", 0.85); }catch(err){ moodPics[k] = ev.target.result; }
         saveMoodPics();
-        pushMoodConfig();
+        if(typeof onMoodPicChange === "function") onMoodPicChange(k);   // 通知配置面板刷新
         var faceEl = document.querySelector('#moodRow .mood-face[data-mood="' + k + '"]');
         if(faceEl) renderMoodFace(faceEl, k);
       };
@@ -1938,8 +2105,8 @@
     }
     // 纯心情表达：不影响转盘排序（结果卡会带上「今天心情」）
   }
-  function addMood(){ if(moodList.length >= 10) return; moodList.push({ id:"mood_" + Date.now(), label:"新心情" }); saveMoods(); buildMoodChips(); pushMoodConfig(); }
-  function deleteMood(k){ moodList = moodList.filter(function(m){ return m.id !== k; }); if(moodPics[k]){ delete moodPics[k]; saveMoodPics(); } if(selectedMood === k) selectedMood = null; saveMoods(); buildMoodChips(); pushMoodConfig(); }
+  function addMood(){ if(moodList.length >= 10) return; moodList.push({ id:"mood_" + Date.now(), label:"新心情" }); saveMoods(); buildMoodChips(); }
+  function deleteMood(k){ moodList = moodList.filter(function(m){ return m.id !== k; }); if(moodPics[k]){ delete moodPics[k]; saveMoodPics(); } if(selectedMood === k) selectedMood = null; saveMoods(); buildMoodChips(); }
   function resetMoods(){ moodList = DEFAULT_MOODS.map(function(m){ return { id:m.id, label:m.label }; }); selectedMood = null; saveMoods(); buildMoodChips(); }
   function moodCtrl(txt, fn){ var b = document.createElement("button"); b.className = "mood-ctrl"; b.type = "button"; b.textContent = txt; b.addEventListener("click", fn); return b; }
   function buildMoodChips(){
@@ -1968,7 +2135,7 @@
         del.setAttribute("aria-label", "删除" + mo.label);
         del.addEventListener("click", function(e){ e.stopPropagation(); deleteMood(k); });
         var inp = document.createElement("input"); inp.className = "mood-nameinput"; inp.value = mo.label; inp.maxLength = 6;
-        inp.addEventListener("change", function(){ var v = (inp.value || "").trim(); mo.label = v || mo.label; inp.value = mo.label; saveMoods(); pushMoodConfig(); });
+        inp.addEventListener("change", function(){ var v = (inp.value || "").trim(); mo.label = v || mo.label; inp.value = mo.label; saveMoods(); });
         inp.addEventListener("keydown", function(e){ if(e.key === "Enter"){ e.preventDefault(); inp.blur(); } });
         item.appendChild(up); item.appendChild(del); item.appendChild(inp);
       } else {
@@ -1983,14 +2150,7 @@
       row.appendChild(item);
     });
     var actions = document.getElementById("moodActions");
-    if(actions){
-      actions.innerHTML = "";
-      if(moodEditMode) actions.appendChild(moodCtrl("＋ 加一个", addMood));
-      var toggle = document.createElement("button"); toggle.className = "mood-editbtn" + (moodEditMode ? " done" : ""); toggle.type = "button";
-      toggle.textContent = moodEditMode ? "✓ 完成" : "✎ 编辑";
-      toggle.addEventListener("click", function(){ moodEditMode = !moodEditMode; buildMoodChips(); });
-      actions.appendChild(toggle);
-    }
+    if(actions) actions.innerHTML = "";   // 编辑功能已移至「配置中心」，干饭页只选不改
   }
 
   function wireCatSwitch(){
@@ -2830,7 +2990,7 @@
   updateFoodBtn();
   foodBanner.hidden = isAmapConfigured();
   buildMoodChips();
-  pullMoodConfig();   // 从服务器拉共享心情配置（本地无后端则静默）
+  pullConfig();   // 从服务器拉完整配置（表情+agent），本地无后端则静默
   wireCatSwitch();
   initTarot();
   initMeme();
@@ -2912,7 +3072,11 @@
     }
     function renderPetSwitch(){
       var box = document.getElementById("petSwitch"); if(!box) return;
-      [].forEach.call(box.querySelectorAll(".petsw"), function(btn){ btn.classList.toggle("active", btn.getAttribute("data-pet") === activePetId); });
+      [].forEach.call(box.querySelectorAll(".petsw"), function(btn){
+        var pid = btn.getAttribute("data-pet");
+        btn.classList.toggle("active", pid === activePetId);
+        var nm = btn.querySelector(".petsw-name"); if(nm && PETS[pid]) nm.textContent = PETS[pid].name;   // 名字跟随配置
+      });
     }
     function setActivePet(id, announce){
       if(!PETS[id]) return;
@@ -3102,6 +3266,32 @@
       setTimeout(function(){ try{ tabInput.focus(); }catch(e){} }, 40);
     }
     window.petChatEnter = petChatEnter;
+    // 应用配置中心的 agent 设置（作息 / 人设 / 名字 / 默认形象）——主作用域 applyConfig 调用
+    window.petApplyConfig = function(agent){
+      if(!agent || typeof agent !== "object") return;
+      if(/^\d{1,2}:\d{2}$/.test(agent.workStart || "")){ var a = agent.workStart.split(":"); WORK_START = (+a[0]) * 60 + (+a[1]); }
+      if(/^\d{1,2}:\d{2}$/.test(agent.workEnd || "")){ var b = agent.workEnd.split(":"); WORK_END = (+b[0]) * 60 + (+b[1]); }
+      if(agent.pets && typeof agent.pets === "object"){
+        Object.keys(agent.pets).forEach(function(pid){
+          if(!PETS[pid]) return;
+          var o = agent.pets[pid] || {};
+          if(o.name)   PETS[pid].name   = o.name;
+          if(o.char)   PETS[pid].char   = o.char;
+          if(o.hello)  PETS[pid].hello  = o.hello;
+          if(o.kicker) PETS[pid].kicker = o.kicker;
+        });
+      }
+      var saved = null; try{ saved = localStorage.getItem(PET_ACTIVE_KEY); }catch(e){}
+      var target = (saved && PETS[saved]) ? saved : ((agent.activePet && PETS[agent.activePet]) ? agent.activePet : activePetId);
+      setActivePet(target, false);   // 重新应用 CHAR/精灵图/名字/brand
+    };
+    // 给配置面板读当前 agent 设置（名字/人设/作息/默认形象）
+    window.petGetConfig = function(){
+      var pets = {};
+      Object.keys(PETS).forEach(function(pid){ var p = PETS[pid]; pets[pid] = { name:p.name, char:p.char, hello:p.hello, kicker:p.kicker }; });
+      function fmt(x){ var h = Math.floor(x/60), m = x%60; return (h<10?"0":"") + h + ":" + (m<10?"0":"") + m; }
+      return { workStart: fmt(WORK_START), workEnd: fmt(WORK_END), activePet: activePetId, pets: pets, order: Object.keys(PETS) };
+    };
     chat.addEventListener("submit", function(e){ e.preventDefault(); sendMini(chatInput.value); });
     if(tabForm) tabForm.addEventListener("submit", function(e){ e.preventDefault(); sendTab(tabInput.value); });
     if(tabChips) tabChips.addEventListener("click", function(e){ var b=e.target.closest("button[data-q]"); if(!b || petBusy) return; sendTab(b.getAttribute("data-q")); });
