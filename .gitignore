@@ -1,0 +1,15 @@
+# 系统文件
+.DS_Store
+**/.DS_Store
+
+# 原始素材生成产物（体积大、非上线所需，本地保留即可）
+haoyunlai-anime-v2/
+pet-runs/
+
+# 旧部署工具（改用 GitHub 部署后不再需要）
+deploy-helper.html
+server-deploy.sh
+terminal-steps.txt
+
+# Claude Code 本地配置（含本地路径，非上线内容）
+.claude/
