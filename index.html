@@ -3106,9 +3106,9 @@
       if(!PETS[id]) return;
       var changed = (id !== activePetId);
       if(changed && chatThreads){                    // 各聊各的：存旧桌宠线程、载新桌宠线程
-        chatThreads[activePetId] = chatData.slice(-30);
+        chatThreads[activePetId] = chatData.slice(-100);
         activePetId = id;
-        chatData = (chatThreads[id] || []).slice(-30);
+        chatData = (chatThreads[id] || []).slice(-100);
         petHistory = [];                             // AI 滚动上下文重置，别把上一只的话带过来
         try{ localStorage.setItem(CHATS_KEY, JSON.stringify(chatThreads)); }catch(e){}
         renderChat();
@@ -3200,9 +3200,9 @@
     // ---- 对话流：每只桌宠一条独立线程（各聊各的），本地持久化（各存最近 30 条）----
     var CHATS_KEY = "moyu-pet-chats-v2";
     var chatThreads = (function(){ try{ var o=JSON.parse(localStorage.getItem(CHATS_KEY)); return (o && typeof o==="object" && !Array.isArray(o)) ? o : {}; }catch(e){ return {}; } })();
-    (function(){ try{ var old=JSON.parse(localStorage.getItem("moyu-pet-chat-v1")); if(Array.isArray(old) && old.length && !chatThreads.yuexinmiao){ chatThreads.yuexinmiao = old.slice(-30); } localStorage.removeItem("moyu-pet-chat-v1"); }catch(e){} })();   // 迁移旧共用线程 → 归月薪喵
-    var chatData = (chatThreads[activePetId] || []).slice(-30);   // 当前桌宠的线程
-    function saveChat(){ chatThreads[activePetId] = chatData.slice(-30); try{ localStorage.setItem(CHATS_KEY, JSON.stringify(chatThreads)); }catch(e){} }
+    (function(){ try{ var old=JSON.parse(localStorage.getItem("moyu-pet-chat-v1")); if(Array.isArray(old) && old.length && !chatThreads.yuexinmiao){ chatThreads.yuexinmiao = old.slice(-100); } localStorage.removeItem("moyu-pet-chat-v1"); }catch(e){} })();   // 迁移旧共用线程 → 归月薪喵
+    var chatData = (chatThreads[activePetId] || []).slice(-100);   // 当前桌宠的线程
+    function saveChat(){ chatThreads[activePetId] = chatData.slice(-100); try{ localStorage.setItem(CHATS_KEY, JSON.stringify(chatThreads)); }catch(e){} }
     function escHtml(s){ return String(s).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]; }); }
     function renderChat(){
       if(!chatLog) return;
@@ -3211,7 +3211,7 @@
       }).join("");
       chatLog.scrollTop = chatLog.scrollHeight;
     }
-    function pushMsg(role, text, greet){ text=String(text||"").trim(); if(role==="pet") text=voice(text); if(!text) return; chatData.push({ role:role, text:text, greet:!!greet }); chatData=chatData.slice(-30); saveChat(); renderChat(); }
+    function pushMsg(role, text, greet){ text=String(text||"").trim(); if(role==="pet") text=voice(text); if(!text) return; chatData.push({ role:role, text:text, greet:!!greet }); chatData=chatData.slice(-100); saveChat(); renderChat(); }
     var typingEl = null;
     function showTyping(){ if(typingEl || !chatLog) return; typingEl=document.createElement("div"); typingEl.className="pd-msg pd-pet pd-typing"; typingEl.innerHTML='<span class="pd-b">'+((PETS[activePetId]||{}).name||"桌宠")+'在打字…</span>'; chatLog.appendChild(typingEl); chatLog.scrollTop=chatLog.scrollHeight; }
     function hideTyping(){ if(typingEl && typingEl.parentNode) typingEl.parentNode.removeChild(typingEl); typingEl=null; }
@@ -3243,7 +3243,7 @@
     }
     // AI 内核：两个入口共用（小气泡 + 唠嗑 tab），维护同一条 petHistory/记忆
     function askPet(msg, done, brief){
-      petHistory.push({ role:"user", content:msg }); petHistory=petHistory.slice(-24);
+      petHistory.push({ role:"user", content:msg }); petHistory=petHistory.slice(-100);
       var d=new Date(), hhmm=("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2);
       var wx = window.petWeather ? ("\n【成都武侯区实时天气】" + window.petWeather + "（真实数据，ta 问天气就照这个答，别自己编）") : "";
       var sys = "你和 DeepSeek 本体一样聪明能干、有求必应——写计划、做推荐、讲笑话、出主意、答疑解惑，什么都能认真做好、做到位。下面给你的只是一层「说话风格/人设」，那是你的声音，绝不削弱你的真实能力。"
@@ -3258,7 +3258,7 @@
       var ctrl=("AbortController" in window)?new AbortController():null;
       var timer=ctrl?setTimeout(function(){ ctrl.abort(); },40000):null;
       fetch(AI_URL, { method:"POST", headers:{ "Content-Type":"application/json" }, signal:ctrl?ctrl.signal:undefined,
-        body: JSON.stringify({ model:"deepseek-chat", response_format:{ type:"json_object" }, messages:[{role:"system",content:sys}].concat(petHistory.slice(-16)), temperature:1.15, max_tokens:(brief?160:1000), stream:false }) })
+        body: JSON.stringify({ model:"deepseek-chat", response_format:{ type:"json_object" }, messages:[{role:"system",content:sys}].concat(petHistory.slice(-100)), temperature:1.15, max_tokens:(brief?160:1000), stream:false }) })
         .then(function(r){ if(!r.ok) throw new Error("http"); return r.json(); })
         .then(function(j){ var t=(j&&j.choices&&j.choices[0]&&j.choices[0].message&&j.choices[0].message.content||"").trim(); if(!t) throw new Error("empty"); return t; })
         .catch(function(){ return null; })
@@ -3271,7 +3271,7 @@
             else { failed=true; try{ localLearn(msg); }catch(e3){} reply = "（呜…我这会儿网有点卡，没接住你这句，再发一遍好嘛 🥺）"; }   // AI 没连上 → 老实说卡了，别装作在回答
           }
           if(failed){ petHistory.pop(); }   // AI 失败：把这条 user 从上下文撤掉，别污染、方便重发
-          else { petHistory.push({ role:"assistant", content:reply }); petHistory=petHistory.slice(-24); }
+          else { petHistory.push({ role:"assistant", content:reply }); petHistory=petHistory.slice(-100); }
           mem.affinity=(mem.affinity||0)+1; saveMem();
           done(reply, /跳舞|蹦迪|dance|来个舞|跳个舞|扭一个/i.test(msg));
         });
