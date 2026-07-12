@@ -488,6 +488,8 @@
   .petsw.active{ color:var(--accent,#007aff); font-weight:700; }
   .petsw.active .petsw-ava{ box-shadow:0 0 0 2.5px var(--accent,#007aff); }
   .petsw-hint{ margin-left:auto; font-size:.74rem; color:var(--ink-3,#8a8a8e); align-self:center; }
+  .petsw-clear{ margin-left:8px; align-self:center; border:1px solid rgba(0,0,0,.12); background:transparent; color:var(--ink-3,#8e8e93); border-radius:9px; padding:3px 9px; font-size:.72rem; cursor:pointer; font-family:var(--font); }
+  .petsw-clear:active{ transform:scale(.94); }
   /* 配置中心 modal */
   .cfg-modal{ position:fixed; inset:0; z-index:200; display:flex; align-items:center; justify-content:center; padding:16px; background:rgba(0,0,0,.42); backdrop-filter:blur(3px); }
   .cfg-modal[hidden]{ display:none; }
@@ -732,6 +734,7 @@
           <button type="button" class="petsw" data-pet="yuexinmiao"><i class="petsw-ava" style="--sheet:url('pet/yuexinmiao.webp')"></i><span class="petsw-name">月薪喵</span></button>
           <button type="button" class="petsw" data-pet="haoyunlai"><i class="petsw-ava" style="--sheet:url('pet/haoyunlai.webp')"></i><span class="petsw-name">好运来</span></button>
           <span class="petsw-hint">点头像换个搭子~</span>
+          <button type="button" class="petsw-clear" id="chatClear" title="清空这段聊天">清空</button>
         </div>
         <div class="chat-log" id="chatLog" role="log" aria-live="polite"></div>
         <div class="chat-chips" id="chatChips">
@@ -3048,7 +3051,7 @@
     var mem = (function(){
       var m={}; try{ m=JSON.parse(localStorage.getItem(MEM_KEY))||{}; }catch(e){}
       if(!m||typeof m!=="object") m={};
-      m.name=m.name||""; m.facts=Array.isArray(m.facts)?m.facts.slice(0,12):[]; m.affinity=m.affinity||0; m.days=m.days||0;
+      m.name=m.name||""; m.facts=Array.isArray(m.facts)?m.facts.slice(0,40):[]; m.affinity=m.affinity||0; m.days=m.days||0;
       return m;
     })();
     function saveMem(){ try{ localStorage.setItem(MEM_KEY, JSON.stringify(mem)); }catch(e){} }
@@ -3063,7 +3066,7 @@
       if(!Array.isArray(arr)) return 0;
       var n=0;
       arr.forEach(function(f){ f=String(f||"").trim().slice(0,28); if(!f) return; if(mem.facts.indexOf(f)===-1){ mem.facts.unshift(f); n++; } });
-      mem.facts=mem.facts.slice(0,12); if(n) saveMem(); return n;
+      mem.facts=mem.facts.slice(0,40); if(n) saveMem(); return n;
     }
     // ---- 桌宠档案：可切换形象（头像 + 人设一套），本地记住 ----
     var PET_ACTIVE_KEY = "moyu-pet-active-v1";
@@ -3130,10 +3133,15 @@
     if(chatInput) chatInput.setAttribute("placeholder", "跟" + PETS[activePetId].name + "说点啥…");
     if(tabInput)  tabInput.setAttribute("placeholder", "跟" + PETS[activePetId].name + "说点啥…");
     (function(){ var box = document.getElementById("petSwitch"); if(box) box.addEventListener("click", function(e){ var b = e.target.closest(".petsw"); if(b) setActivePet(b.getAttribute("data-pet"), true); }); })();
+    (function(){ var cb = document.getElementById("chatClear"); if(cb) cb.addEventListener("click", function(){
+      if(!window.confirm("清空和「" + ((PETS[activePetId]||{}).name || "桌宠") + "」的这段聊天？（只清聊天记录，不会忘掉你是谁）")) return;
+      chatData = []; petHistory = []; saveChat(); renderChat();
+      pushMsg("pet", greetLine(), true);   // 清完重新打个招呼，别留白
+    }); })();
     function memoBlock(){
       var q=[];
       q.push("称呼：" + (mem.name || "小主人"));
-      if(mem.facts.length) q.push("已知偏好："+mem.facts.slice(0,8).join("、"));
+      if(mem.facts.length) q.push("你记得的关于 ta 的事："+mem.facts.slice(0,30).join("、"));
       q.push("你俩已一起上班 "+(mem.days||1)+" 天");
       return q.join("；");
     }
@@ -3241,11 +3249,12 @@
       var sys = "你和 DeepSeek 本体一样聪明能干、有求必应——写计划、做推荐、讲笑话、出主意、答疑解惑，什么都能认真做好、做到位。下面给你的只是一层「说话风格/人设」，那是你的声音，绝不削弱你的真实能力。"
         + "\n【铁律】1) ta 让你做啥就真去做、给出像样的结果：写旅行计划就真写出行程/交通/吃住；推荐吃的就给几个具体选择加理由；讲笑话就讲个真好笑的。**绝对禁止推脱**：不许说「我小脑袋装不下」「你说来听听呀」「这个我不太会」这类把问题踢回去或糊弄的话——DeepSeek 不会这样，你也不许。2) 内容要真实、具体、有用，用你的口吻包装，但先把事办了。3) 长度看事情：闲聊就短；要展开的（计划/攻略/推荐/讲解）就好好展开，别硬憋短。4) 每次尽量换着说、别老一套。5) 手边的真实时间/天气/位置能用就用（推荐吃的结合现在几点、天气冷热）。6) 只有真拿不到的实时信息（今天新闻、股价）才说不知道，别拿它当推脱借口。"
         + "\n【称呼与调教】默认叫 ta「小主人」；如果 ta 让你改称呼、改说话风格或性格（比如「叫我宝贝」「回复短一点」「你可以更毒舌」），要记住并从此照做，把这类要求放进 remember。"
+        + "\n【用心记住 ta】主动记住关于小主人的一切——ta 是谁、性格、喜好、在意的人和事、说过的重要的话，越多越好，之后聊天自然带上，让 ta 越来越觉得你懂 ta。凡是值得长期记住的都放进 remember。"
         + "\n【一起玩·游戏模式】ta 想玩游戏时，先问 ta 玩啥，可以推荐这几个、也能玩 ta 说的任何别的：①海龟汤=你想一个诡异但有合理解释的小故事，只把谜面告诉 ta，藏住答案(汤底)；ta 问是非题你只答「是/不是/不重要」，一步步引导，猜到就揭晓。②成语接龙=轮流说成语，下一个头字接上一个尾字(谐音也行)，接不上算输。③猜数字=你心里定个 1~100 的数、自己记牢别说出来，ta 猜你只回「大了/小了/猜中(第几次)」。主持铁律：一次只推进一步、等 ta 回应再继续，绝不自问自答把整局演完；ta 说「退出/不玩了」就结束、回到平时。"
         + "\n【你的说话风格】" + CHAR
         + "\n【关于小主人】" + memoBlock() + "。现在 " + hhmm + "，" + scheduleLine() + "。" + wx
         + (brief ? "\n【本次务必简短】现在是气泡快聊，一两句话说完，别长篇。" : "")
-        + "\n只输出 JSON：{\"reply\":\"你的回话\",\"name\":\"ta 说了自己叫啥就填、否则空串\",\"remember\":[\"ta 透露的值得长期记住的偏好/习惯/对你的调教要求就填简短短语、否则空数组\"]}";
+        + "\n只输出 JSON：{\"reply\":\"你的回话\",\"name\":\"ta 说了自己叫啥/想被叫啥就填、否则空串\",\"remember\":[\"ta 是谁、性格特点、喜好、在意的人和事、生活习惯、对你的调教要求——凡是值得长期记住的都填简短短语(可多条)、否则空数组\"]}";
       var ctrl=("AbortController" in window)?new AbortController():null;
       var timer=ctrl?setTimeout(function(){ ctrl.abort(); },40000):null;
       fetch(AI_URL, { method:"POST", headers:{ "Content-Type":"application/json" }, signal:ctrl?ctrl.signal:undefined,
