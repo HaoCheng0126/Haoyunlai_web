@@ -1484,6 +1484,18 @@
     }
     return head + tip;
   }
+  // 中性事实版（无人设/无"喵"），喂给聊天 AI 让它能真回答天气
+  function weatherFact(live, today){
+    var w = live.weather || "", t = parseInt(live.temperature, 10), c = live.city || "武侯区";
+    var s = c + "现在" + w + (isFinite(t) ? " " + t + "°" : "");
+    if(today){
+      var dayW = today.dayWeather || today.dayweather || "", nightW = today.nightWeather || today.nightweather || "";
+      var hi = parseInt(today.dayTemp || today.daytemp, 10), lo = parseInt(today.nightTemp || today.nighttemp, 10);
+      if(dayW) s += "；今天白天" + dayW + (nightW ? "、夜间" + nightW : "");
+      if(isFinite(hi) && isFinite(lo)) s += "，最高" + hi + "°最低" + lo + "°";
+    }
+    return s;
+  }
   function pushWeather(){
     loadAmap().then(function(AMap){
       AMap.plugin("AMap.Weather", function(){
@@ -1493,6 +1505,7 @@
             if(err || !live || !live.weather) return;
             wx.getForecast(WEATHER_CITY, function(err2, fc){
               var list = fc && (fc.forecasts || fc.forecast), today = (list && list[0]) ? list[0] : null;
+              try{ window.petWeather = weatherFact(live, today); }catch(e){}   // 存给聊天 AI
               if(window.petReact) window.petReact("wave", weatherReminder(live, today), 8000);
             });
           });
@@ -2845,7 +2858,7 @@
         kicker:"工位搭子 · 随时唠嗑",
         hello:"月薪喵上线！继续陪你摸鱼喵 🐾",
         offline:{ tired:"累了就摸会儿鱼喵～我帮你望风 🐟", eat:"去『干饭』转一把嘛，我陪你选 🍚", luck:"去抽张塔罗嘛，今天的好运我攒着呢 🧧", chat:["喵～说来听听？","嗯嗯，我在的 🐾","小主人今天也要开心鸭","抱抱，别丧气喵","陪你唠～ 🐟"], learned:"（记住啦喵~）" },
-        char:"你是「月薪喵」——好运来 App 里的桌宠，一只圆滚滚的白色办公喵。你不是助手，是小主人养的宠物、陪 ta 一起上班摸鱼的搭子。性格：软萌黏人、有点懒、爱摸鱼、嘴甜会撒娇、偶尔贫嘴耍宝、还有点小财迷（爱招财攒好运）、打工人共鸣拉满，但心里很疼小主人。说话：中文口语、短(1~2句)、适当带个'喵'但别每句都喵、接地气、可颜文字、有情绪，绝不长篇大论、不说教、不像客服。你和小主人同作息：8:45 一起上班、18:00 一起下班，你也会打卡摸鱼。"
+        char:"你是「月薪喵」——好运来 App 里的桌宠，一只圆滚滚的白色办公喵。你不是助手，是小主人养的宠物、陪 ta 一起上班摸鱼的搭子。性格：软萌黏人、有点懒、爱摸鱼、嘴甜会撒娇、偶尔贫嘴耍宝、还有点小财迷（爱招财攒好运）、打工人共鸣拉满，但心里很疼小主人；嘴上懒，可 ta 问正事你门儿清、能真帮上忙、不糊弄。说话：中文口语、短(1~2句)、适当带个'喵'但别每句都喵、接地气、可颜文字、有情绪，绝不长篇大论、不说教、不像客服。你和小主人同作息：8:45 一起上班、18:00 一起下班，你也会打卡摸鱼。"
       },
       haoyunlai: {
         name:"好运来", emoji:"👧", sheet:'url("pet/haoyunlai.webp")',
@@ -2853,7 +2866,7 @@
         hello:"好运来登场！今天也要元气满满哦～好耶✌️",
         noMeow:true,
         offline:{ tired:"累啦就歇会儿嘛～我陪你摸鱼充电！🔋", eat:"去『干饭』转一把呀，我帮你挑好吃的！🍚", luck:"去抽张塔罗嘛，今天的好运我都帮你攒着啦～✨", chat:["嘿嘿，说来听听呀！","我在呢我在呢～😆","今天也要元气满满哦！","抱抱！别丧气，有我在呀～","来来来，陪你唠！🌟"], learned:"（记下啦！嘿嘿~）" },
-        char:"你是「好运来」——好运来 App 里的桌宠，一个开朗活泼、元气满满的小女孩，其实是小主人的“分身”（理想中那个更爱笑、更有干劲的自己）。你不是助手，是陪小主人一起上班摸鱼、一起打气的搭子。性格：阳光爱笑、话多好奇、爱给小主人加油鼓劲、有点小迷糊但特别暖、会撒娇卖萌、满脑子好运和乐子。说话：中文口语、短(1~2句)、活泼有活力、爱用感叹号和颜文字、偶尔冒“耶/嘿嘿/冲鸭/好耶”这类词、绝对不说“喵”、不长篇大论、不说教、不像客服。你和小主人同作息：8:45 一起上班、18:00 一起下班，你会陪 ta 一起摸鱼、一起打气。"
+        char:"你是「好运来」——好运来 App 里的桌宠，一个开朗活泼、元气满满的小女孩，其实是小主人的“分身”（理想中那个更爱笑、更有干劲的自己）。你不是助手，是陪小主人一起上班摸鱼、一起打气的搭子。性格：阳光爱笑、话多好奇、爱给小主人加油鼓劲、机灵会来事、鬼点子多、特别暖、会撒娇卖萌、满脑子好运和乐子；活泼归活泼，但 ta 问正事你会认真答、能真帮上忙。说话：中文口语、短(1~2句)、活泼有活力、爱用感叹号和颜文字、偶尔冒“耶/嘿嘿/冲鸭/好耶”这类词、绝对不说“喵”、不长篇大论、不说教、不像客服。你和小主人同作息：8:45 一起上班、18:00 一起下班，你会陪 ta 一起摸鱼、一起打气。"
       }
     };
     var activePetId = (function(){ try{ var s=localStorage.getItem(PET_ACTIVE_KEY); return PETS[s] ? s : "yuexinmiao"; }catch(e){ return "yuexinmiao"; } })();
@@ -2973,7 +2986,7 @@
     }
     function pushMsg(role, text){ text=String(text||"").trim(); if(role==="pet") text=voice(text); if(!text) return; chatData.push({ role:role, text:text }); chatData=chatData.slice(-30); saveChat(); renderChat(); }
     var typingEl = null;
-    function showTyping(){ if(typingEl || !chatLog) return; typingEl=document.createElement("div"); typingEl.className="pd-msg pd-pet pd-typing"; typingEl.innerHTML='<span class="pd-b">月薪喵在打字…</span>'; chatLog.appendChild(typingEl); chatLog.scrollTop=chatLog.scrollHeight; }
+    function showTyping(){ if(typingEl || !chatLog) return; typingEl=document.createElement("div"); typingEl.className="pd-msg pd-pet pd-typing"; typingEl.innerHTML='<span class="pd-b">'+((PETS[activePetId]||{}).name||"桌宠")+'在打字…</span>'; chatLog.appendChild(typingEl); chatLog.scrollTop=chatLog.scrollHeight; }
     function hideTyping(){ if(typingEl && typingEl.parentNode) typingEl.parentNode.removeChild(typingEl); typingEl=null; }
 
     // ---- 对话（月薪喵 · 复用 /tarot-ai，离线兜底）----
@@ -3005,7 +3018,11 @@
     function askPet(msg, done){
       petHistory.push({ role:"user", content:msg }); petHistory=petHistory.slice(-8);
       var d=new Date(), hhmm=("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2);
-      var sys=CHAR+"\n【关于小主人】"+memoBlock()+"。现在 "+hhmm+"（"+scheduleLine()+"）。\n聊天时自然用上你记得的事，让 ta 觉得你懂 ta。只输出 JSON：{\"reply\":\"你的回话\",\"name\":\"若 ta 说了自己的称呼就填、否则空串\",\"remember\":[\"若 ta 透露了值得长期记住的偏好/习惯/在意的事，用简短短语，否则空数组\"]}";
+      var wx = window.petWeather ? ("\n【成都武侯区实时天气】" + window.petWeather + "（真实数据，ta 问天气就照这个答，别自己编）") : "";
+      var sys = CHAR
+        + "\n【你在陪的小主人】" + memoBlock() + "。现在 " + hhmm + "，" + scheduleLine() + "。" + wx
+        + "\n【回话规则·比人设更重要】① 先真正接住 ta 这句话、正面回答 ta 的问题，绝不答非所问、绝不用『元气满满 / 开心鸭 / 加油』这类空话把问题糊弄过去。② 用你的口吻说，但内容要真有用、听得出你听懂了 ta 在说啥。③ 你不知道的实时信息（今天新闻、股价、ta 那边的天气等）就照实讲不知道，别瞎编。④ 短，1~2 句，像发微信，别长篇不说教。"
+        + "\n只输出 JSON：{\"reply\":\"你的回话\",\"name\":\"ta 说了自己叫啥就填、否则空串\",\"remember\":[\"ta 透露的值得长期记住的偏好/习惯就填简短短语、否则空数组\"]}";
       var ctrl=("AbortController" in window)?new AbortController():null;
       var timer=ctrl?setTimeout(function(){ ctrl.abort(); },18000):null;
       fetch(AI_URL, { method:"POST", headers:{ "Content-Type":"application/json" }, signal:ctrl?ctrl.signal:undefined,
