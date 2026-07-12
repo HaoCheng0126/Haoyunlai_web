@@ -62,6 +62,9 @@
     transition:background var(--dur) var(--ease), color var(--dur) var(--ease), box-shadow var(--dur) var(--ease), transform .1s var(--ease);
     -webkit-tap-highlight-color:transparent;
   }
+  .seg{ display:flex; align-items:center; justify-content:center; gap:5px; }
+  .seg-ico{ font-size:1.02em; line-height:1; }
+  .seg-txt{ line-height:1; }
   .seg:active, .catseg:active, .tseg:active{ transform:scale(.97); }
   .seg.active, .catseg.active, .tseg.active{ color:var(--ink); background:var(--card); box-shadow:0 1px 3px rgba(0,0,0,.12), 0 0 0 .5px rgba(0,0,0,.04); }
   .seg:focus-visible, .catseg:focus-visible, .tseg:focus-visible{ outline:3px solid rgba(0,122,255,.4); outline-offset:2px; }
@@ -488,19 +491,21 @@
   @media (max-width:480px){
     .chat-page{ padding:12px; min-height:56vh; }
     .chat-log{ max-height:52vh; }
-    /* tab 栏移到底部悬浮，拇指好按 */
-    .mode-switch{ position:fixed; left:8px; right:8px; bottom:calc(8px + env(safe-area-inset-bottom)); z-index:55; box-shadow:0 -1px 10px rgba(0,0,0,.05), 0 12px 28px -8px rgba(0,0,0,.3); }
-    .mode-switch .seg{ font-size:.82rem; padding:9px 6px; }
-    body{ padding-bottom:calc(env(safe-area-inset-bottom) + 78px); }   /* 内容给底部 tab 栏让位 */
+    /* 正经底部标签栏：通栏贴底、实色不透明、顶部细分割线、图标在上文字在下 */
+    .mode-switch{ position:fixed; left:0; right:0; bottom:0; z-index:55; gap:2px; border-radius:0; padding:6px 6px calc(4px + env(safe-area-inset-bottom)); background:var(--card,#fff); border-top:1px solid rgba(0,0,0,.08); box-shadow:0 -8px 24px -14px rgba(0,0,0,.22); backdrop-filter:none; -webkit-backdrop-filter:none; }
+    .mode-switch .seg{ flex-direction:column; gap:3px; font-size:.62rem; font-weight:600; letter-spacing:0; padding:4px 2px; border-radius:12px; color:var(--ink-3,#8a8a8e); }
+    .mode-switch .seg-ico{ font-size:1.34rem; }
+    .mode-switch .seg.active{ color:var(--accent,#007aff); background:transparent; box-shadow:none; }
+    body{ padding-bottom:calc(env(safe-area-inset-bottom) + 64px); }   /* 内容给底部标签栏让位 */
     body[data-mode="chat"] .pet-companion{ display:none; }             /* 唠嗑 tab 本身就是聊天，藏起浮动桌宠免挡输入/chips */
-    footer.tip{ display:none; }                                        /* 底部 tab 栏已替代，页脚手机端隐藏免重叠 */
+    footer.tip{ display:none; }                                        /* 底部标签栏已替代，页脚手机端隐藏 */
   }
   .mood-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:4px; }
   .mood-head-title{ font-family:var(--font); font-size:.88rem; font-weight:600; color:var(--ink-2,#48484a); }
   .mood-head-actions{ display:flex; gap:8px; align-items:center; flex:0 0 auto; }
   @media (max-width:480px){
     .pet-sprite{ --s:.4; }
-    .pet-companion{ right:10px; bottom:calc(72px + env(safe-area-inset-bottom)); gap:5px; }
+    .pet-companion{ right:10px; bottom:calc(58px + env(safe-area-inset-bottom)); gap:5px; }
     .pet-bubble{ max-width:148px; font-size:.76rem; padding:8px 10px; }
     .pet-chat{ padding:4px 4px 4px 10px; }
     .pet-chat input{ width:96px; font-size:.8rem; }
@@ -519,11 +524,11 @@
     </header>
 
     <nav class="mode-switch" role="tablist" aria-label="模式切换">
-      <button id="modeMoyu" class="seg active" type="button" role="tab" aria-selected="true" aria-controls="view-moyu">🎰 摸鱼</button>
-      <button id="modeFood" class="seg" type="button" role="tab" aria-selected="false" aria-controls="view-food">🍜 干饭</button>
-      <button id="modeTarot" class="seg" type="button" role="tab" aria-selected="false" aria-controls="view-tarot">🔮 塔罗</button>
-      <button id="modeChat" class="seg" type="button" role="tab" aria-selected="false" aria-controls="view-chat">🐱 唠嗑</button>
-      <button id="modeMeme" class="seg" type="button" role="tab" aria-selected="false" aria-controls="view-meme" hidden style="display:none">⚔️ 斗图</button>
+      <button id="modeMoyu" class="seg active" type="button" role="tab" aria-selected="true" aria-controls="view-moyu"><span class="seg-ico">🎰</span><span class="seg-txt">摸鱼</span></button>
+      <button id="modeFood" class="seg" type="button" role="tab" aria-selected="false" aria-controls="view-food"><span class="seg-ico">🍜</span><span class="seg-txt">干饭</span></button>
+      <button id="modeTarot" class="seg" type="button" role="tab" aria-selected="false" aria-controls="view-tarot"><span class="seg-ico">🔮</span><span class="seg-txt">塔罗</span></button>
+      <button id="modeChat" class="seg" type="button" role="tab" aria-selected="false" aria-controls="view-chat"><span class="seg-ico">🐱</span><span class="seg-txt">唠嗑</span></button>
+      <button id="modeMeme" class="seg" type="button" role="tab" aria-selected="false" aria-controls="view-meme" hidden style="display:none"><span class="seg-ico">⚔️</span><span class="seg-txt">斗图</span></button>
     </nav>
 
     <!-- ============ 摸鱼转盘 ============ -->
