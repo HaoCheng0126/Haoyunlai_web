@@ -24,11 +24,11 @@
   }
   *,*::before,*::after{ box-sizing:border-box; }
   html,body{ margin:0; padding:0; }
-  html{ -webkit-text-size-adjust:100%; overflow-x:hidden; }
+  html{ -webkit-text-size-adjust:100%; overflow-x:clip; }
   body{
     font-family:var(--font); color:var(--ink);
     background:linear-gradient(180deg, var(--bg-a), var(--bg-b)); background-attachment:fixed;
-    min-height:100dvh; line-height:1.47; overflow-x:hidden;
+    min-height:100dvh; line-height:1.47; overflow-x:clip;
     padding:calc(env(safe-area-inset-top) + 20px) 16px calc(env(safe-area-inset-bottom) + 44px);
     -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
   }
@@ -1110,7 +1110,10 @@
       void resultEl.offsetWidth;
       resultEl.classList.add("win");
       resultVal.textContent = "🎯 " + (pick == null ? "" : pick);
-      if(pick != null && window.petReact) window.petReact("jump", ["就这个啦，冲！","天选之活，去吧！","喵，安排上！","命运已定，别纠结～"][Math.floor(Math.random()*4)]);
+      if(pick != null && window.petReact){
+        var mL = ["「"+pick+"」——天选之活，冲鸭！","就它了：「"+pick+"」，摸鱼有理 🐟","抽到「"+pick+"」！这不巧了嘛～","「"+pick+"」安排上，别纠结啦","命运翻牌：「"+pick+"」，去吧！","嘿，就「"+pick+"」了，我陪你摸 🐾","「"+pick+"」！干就完事儿","诶「"+pick+"」，这个我喜欢，走起"];
+        window.petReact("jump", mL[Math.floor(Math.random()*mL.length)]);
+      }
     }
   });
 
@@ -1487,7 +1490,10 @@
       foodResult.classList.add("win");
       if(!poi){ foodResultVal.textContent = "—"; fcPhoto.hidden = true; fcMeta.textContent = ""; fcHours.hidden = true; fcReason.hidden = true; foodActions.innerHTML = ""; return; }
       renderFoodResult(poi);
-      if(window.petReact) window.petReact("jump", "就吃这家！我都馋了 🍚");
+      if(window.petReact){
+        var nm = (poi && poi.name) ? poi.name : "这家", fL = ["「"+nm+"」！我都馋了 🍚","就吃「"+nm+"」吧，准没错～","「"+nm+"」走起！我陪你干饭 🍜","抽到「"+nm+"」，听着就香","「"+nm+"」！今天就它了","去「"+nm+"」！记得给我带一口 😋","诶「"+nm+"」不错，冲鸭"];
+        window.petReact("jump", fL[Math.floor(Math.random()*fL.length)]);
+      }
     }
   });
 
@@ -2474,14 +2480,17 @@
   function revealTarot(){
     tarotBusy = true;
     tarotEls.stageHint.textContent = "命运正在翻面…";
-    if(window.petReact) window.petReact("think", "让月薪喵陪你看看这牌…", 3200);
+    if(window.petReact) window.petReact("think", ["让我陪你看看这牌…","嗯…我盯着牌面看看哦","牌在跟我说话了，等等…","让我读读这牌的意思～"][Math.floor(Math.random()*4)], 3200);
     var reduce = prefersReduced();
     function finish(){
       buildTarotReading(tarotPicked.map(function(x){ return x.draw; }));
       if(window.petReact){
         var pdr = tarotPicked.map(function(x){ return x.draw; });
         var bad = pdr.filter(function(d){ return d.rev; }).length > pdr.length / 2;
-        window.petReact(bad ? "think" : "jump", bad ? "牌面有点纠结…别怕，有我陪着呢 🌙" : "喵！这牌面不赖，今天有盼头 🔮", 4800);
+        var tG = ["这牌面不赖，今天有盼头 🔮","嚯，好牌！我就说你运气在线 ✨","牌灵都站你这边啦，稳 🌟","这象象好，放心冲 🍀","宇宙给你开绿灯了呢，嘻","牌面挺旺，好事要来喽 🌙","接住这波好运，今天靠谱 🧧"];
+        var tB = ["牌面有点纠结…别怕，有我陪着呢 🌙","这牌是提醒你悠着点，不是坏事～","嗯…牌有点闷，但日子是你过的，别慌","逆位而已，翻篇就好，我在呢 🫂","牌面让你缓一缓，抱抱","有点小坎，稳住，我陪你 🌛"];
+        var tP = bad ? tB : tG;
+        window.petReact(bad ? "think" : "jump", tP[Math.floor(Math.random()*tP.length)], 4800);
       }
       tarotBusy = false;
       tarotDone = true;
@@ -3181,7 +3190,7 @@
       }).join("");
       chatLog.scrollTop = chatLog.scrollHeight;
     }
-    function pushMsg(role, text){ text=String(text||"").trim(); if(role==="pet") text=voice(text); if(!text) return; chatData.push({ role:role, text:text }); chatData=chatData.slice(-30); saveChat(); renderChat(); }
+    function pushMsg(role, text, greet){ text=String(text||"").trim(); if(role==="pet") text=voice(text); if(!text) return; chatData.push({ role:role, text:text, greet:!!greet }); chatData=chatData.slice(-30); saveChat(); renderChat(); }
     var typingEl = null;
     function showTyping(){ if(typingEl || !chatLog) return; typingEl=document.createElement("div"); typingEl.className="pd-msg pd-pet pd-typing"; typingEl.innerHTML='<span class="pd-b">'+((PETS[activePetId]||{}).name||"桌宠")+'在打字…</span>'; chatLog.appendChild(typingEl); chatLog.scrollTop=chatLog.scrollHeight; }
     function hideTyping(){ if(typingEl && typingEl.parentNode) typingEl.parentNode.removeChild(typingEl); typingEl=null; }
@@ -3262,7 +3271,9 @@
     }
     // 进唠嗑 tab：渲染历史（空则问候）+ 聚焦输入
     function petChatEnter(){
-      if(!chatData.length) pushMsg("pet", greetLine()); else renderChat();
+      renderChat();
+      var last = chatData[chatData.length-1];
+      if(!last || last.role === "me" || !last.greet) pushMsg("pet", greetLine(), true);   // 每次进来先打招呼（上一条已是招呼就不重复刷）
       setTimeout(function(){ try{ tabInput.focus(); }catch(e){} }, 40);
     }
     window.petChatEnter = petChatEnter;
@@ -3282,7 +3293,8 @@
         });
       }
       var saved = null; try{ saved = localStorage.getItem(PET_ACTIVE_KEY); }catch(e){}
-      var target = (saved && PETS[saved]) ? saved : ((agent.activePet && PETS[agent.activePet]) ? agent.activePet : activePetId);
+      // 配置里的「默认形象」优先生效（在设置页切了就真的切）；没设才回落到本地选择
+      var target = (agent.activePet && PETS[agent.activePet]) ? agent.activePet : ((saved && PETS[saved]) ? saved : activePetId);
       setActivePet(target, false);   // 重新应用 CHAR/精灵图/名字/brand
     };
     // 给配置面板读当前 agent 设置（名字/人设/作息/默认形象）
