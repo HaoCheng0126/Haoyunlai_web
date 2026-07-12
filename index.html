@@ -1710,6 +1710,33 @@
   var MOODPIC_KEY = "moyu-food-moodpics-v1";
   var moodPics = (function(){ try{ return JSON.parse(localStorage.getItem(MOODPIC_KEY)) || {}; }catch(e){ return {}; } })();
   function saveMoodPics(){ try{ localStorage.setItem(MOODPIC_KEY, JSON.stringify(moodPics)); }catch(e){} }
+
+  // ---- 共享同步：干饭心情配置存服务器 /moodpics，你俩自助传、互相看到（本地无后端则静默降级）----
+  var MOODPW_KEY = "moyu-food-uploadpw-v1";
+  function pullMoodConfig(){
+    fetch("/moodpics").then(function(r){ return r.ok ? r.json() : null; }).then(function(d){
+      if(!d) return;
+      var changed = false;
+      if(Array.isArray(d.moods) && d.moods.length){
+        var c = d.moods.filter(function(m){ return m && m.id && typeof m.label === "string"; });
+        if(c.length){ moodList = c; saveMoods(); changed = true; }
+      }
+      if(d.pics && typeof d.pics === "object" && Object.keys(d.pics).length){ moodPics = d.pics; saveMoodPics(); changed = true; }
+      if(changed && typeof buildMoodChips === "function") buildMoodChips();
+    }).catch(function(){});
+  }
+  function pushMoodConfig(retry){
+    var pw = localStorage.getItem(MOODPW_KEY) || "";
+    fetch("/moodpics", { method:"POST", headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({ moods: moodList, pics: moodPics, pw: pw }) })
+      .then(function(r){
+        if(r.status === 403 && !retry){          // 密码不对/没设 → 问一次再重试
+          var np = (window.prompt("上传密码（和对方用同一个，设了才会同步给 ta）：") || "").trim();
+          if(np){ localStorage.setItem(MOODPW_KEY, np); pushMoodConfig(true); }
+          else localStorage.removeItem(MOODPW_KEY);
+        }
+      }).catch(function(){});   // 离线/本地无后端：本地已存，静默
+  }
   var pendingMood = null, moodFileInput = null, moodEditMode = false;
 
   var RE_DESSERT = /甜品|甜点|糕|面包|烘焙|吐司|泡芙|布丁|可丽饼|华夫|班戟|慕斯|舒芙蕾|提拉米苏|马卡龙|冰淇淋|冰激凌|雪糕|糖水|甜甜圈|饼房|dessert|bakery/i;
@@ -1893,6 +1920,7 @@
         cv.getContext("2d").drawImage(img, 0, 0, cw, ch);
         try{ moodPics[k] = cv.toDataURL("image/jpeg", 0.85); }catch(err){ moodPics[k] = ev.target.result; }
         saveMoodPics();
+        pushMoodConfig();
         var faceEl = document.querySelector('#moodRow .mood-face[data-mood="' + k + '"]');
         if(faceEl) renderMoodFace(faceEl, k);
       };
@@ -1910,8 +1938,8 @@
     }
     // 纯心情表达：不影响转盘排序（结果卡会带上「今天心情」）
   }
-  function addMood(){ if(moodList.length >= 10) return; moodList.push({ id:"mood_" + Date.now(), label:"新心情" }); saveMoods(); buildMoodChips(); }
-  function deleteMood(k){ moodList = moodList.filter(function(m){ return m.id !== k; }); if(moodPics[k]){ delete moodPics[k]; saveMoodPics(); } if(selectedMood === k) selectedMood = null; saveMoods(); buildMoodChips(); }
+  function addMood(){ if(moodList.length >= 10) return; moodList.push({ id:"mood_" + Date.now(), label:"新心情" }); saveMoods(); buildMoodChips(); pushMoodConfig(); }
+  function deleteMood(k){ moodList = moodList.filter(function(m){ return m.id !== k; }); if(moodPics[k]){ delete moodPics[k]; saveMoodPics(); } if(selectedMood === k) selectedMood = null; saveMoods(); buildMoodChips(); pushMoodConfig(); }
   function resetMoods(){ moodList = DEFAULT_MOODS.map(function(m){ return { id:m.id, label:m.label }; }); selectedMood = null; saveMoods(); buildMoodChips(); }
   function moodCtrl(txt, fn){ var b = document.createElement("button"); b.className = "mood-ctrl"; b.type = "button"; b.textContent = txt; b.addEventListener("click", fn); return b; }
   function buildMoodChips(){
@@ -1940,7 +1968,7 @@
         del.setAttribute("aria-label", "删除" + mo.label);
         del.addEventListener("click", function(e){ e.stopPropagation(); deleteMood(k); });
         var inp = document.createElement("input"); inp.className = "mood-nameinput"; inp.value = mo.label; inp.maxLength = 6;
-        inp.addEventListener("change", function(){ var v = (inp.value || "").trim(); mo.label = v || mo.label; inp.value = mo.label; saveMoods(); });
+        inp.addEventListener("change", function(){ var v = (inp.value || "").trim(); mo.label = v || mo.label; inp.value = mo.label; saveMoods(); pushMoodConfig(); });
         inp.addEventListener("keydown", function(e){ if(e.key === "Enter"){ e.preventDefault(); inp.blur(); } });
         item.appendChild(up); item.appendChild(del); item.appendChild(inp);
       } else {
@@ -2802,6 +2830,7 @@
   updateFoodBtn();
   foodBanner.hidden = isAmapConfigured();
   buildMoodChips();
+  pullMoodConfig();   // 从服务器拉共享心情配置（本地无后端则静默）
   wireCatSwitch();
   initTarot();
   initMeme();
