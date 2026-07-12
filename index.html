@@ -653,6 +653,7 @@
             <option value="2000">2 公里</option>
             <option value="3000" selected>3 公里</option>
             <option value="5000">5 公里</option>
+            <option value="10000">10 公里</option>
           </select>
         </div>
       </div>
@@ -1353,16 +1354,22 @@
     return pool.slice(0, n);
   }
   function addChallenges(list){
-    var room = MAX_OPTS - options.length;
-    if(room <= 0){ resultEl.classList.remove("win"); resultVal.textContent = "池子满了（" + MAX_OPTS + " 项），先删几条再加挑战 🗑️"; return 0; }
     var fresh = [];
     for(var i=0;i<list.length;i++){
       var t = String(list[i] || "").trim().slice(0, 40);
       if(t && options.indexOf(t) === -1 && fresh.indexOf(t) === -1) fresh.push(t);
     }
-    fresh = fresh.slice(0, room);
     if(!fresh.length){ resultEl.classList.remove("win"); resultVal.textContent = "AI 出的都跟池子里重了，再点一次 🎲"; return 0; }
-    options = options.concat(fresh);
+    var room = MAX_OPTS - options.length;
+    if(room > 0){
+      options = options.concat(fresh.slice(0, room));   // 有空位就直接加
+    } else {
+      // 池子满了 → 随机替换里面几条（用新挑战顶掉旧的）
+      var n = Math.min(fresh.length, options.length), idx = [];
+      for(var k=0;k<options.length;k++) idx.push(k);
+      for(var a=idx.length-1;a>0;a--){ var b=Math.floor(Math.random()*(a+1)); var tmp=idx[a]; idx[a]=idx[b]; idx[b]=tmp; }
+      for(var m=0;m<n;m++){ options[idx[m]] = fresh[m]; }
+    }
     saveOptions();
     internWheel.setItems(options, identity);
     renderList();
@@ -1374,7 +1381,6 @@
   }
   function aiChallenge(){
     if(aiChallengeBusy || internWheel.isSpinning()) return;
-    if(MAX_OPTS - options.length <= 0){ resultEl.classList.remove("win"); resultVal.textContent = "池子满了（" + MAX_OPTS + " 项），先删几条再加挑战 🗑️"; return; }
     aiChallengeBusy = true; setAiBtnLoading(true);
     var ctrl = ("AbortController" in window) ? new AbortController() : null;
     var timer = ctrl ? setTimeout(function(){ ctrl.abort(); }, 20000) : null;
@@ -1395,7 +1401,7 @@
       .then(function(list){
         if(timer) clearTimeout(timer);
         var added = addChallenges(list);
-        if(added > 0){ resultEl.classList.remove("win"); void resultEl.offsetWidth; resultEl.classList.add("win"); resultVal.textContent = "🎲 AI 给你加了 " + added + " 条新挑战，开转试试！"; }
+        if(added > 0){ var full = options.length >= MAX_OPTS; resultEl.classList.remove("win"); void resultEl.offsetWidth; resultEl.classList.add("win"); resultVal.textContent = "🎲 AI " + (full ? "换上了 " : "给你加了 ") + added + " 条新挑战，开转试试！"; }
       })
       .then(function(){ aiChallengeBusy = false; setAiBtnLoading(false); });
   }
@@ -1604,12 +1610,18 @@
   function resolveCenter(AMap, kind, addr){
     return new Promise(function(resolve, reject){
       if(kind === "geo"){
-        var geo = new AMap.Geolocation({ enableHighAccuracy:true, timeout:12000, noIpLocate:0, needAddress:false });
+        var geo = new AMap.Geolocation({ enableHighAccuracy:true, timeout:12000, noIpLocate:0, needAddress:true });
         geo.getCurrentPosition(function(status, result){
           if(status === "complete" && result && result.position){
             var c = lnglat(result.position);
             if(c){
               lastGeoCoarse = (result.location_type === "ip") || (Number(result.accuracy) > 3000);
+              try{   // 反查到的城市/地址自动填到上方输入框
+                var ac = result.addressComponent || {};
+                var city = ac.city || ac.province || "";
+                if(city) foodCity.value = String(city).replace(/市$/, "");
+                if(result.formattedAddress){ foodAddr.value = result.formattedAddress; chosenCenter = c; }
+              }catch(e){}
               resolve(c); return;
             }
           }
@@ -1794,7 +1806,7 @@
 
   // ---- 配置中心：完整配置(表情图+文字 + agent)存服务器 /config，主 app 读取应用；本地无后端则静默 ----
   var CONFIGPW_KEY = "moyu-config-pw-v1";
-  function applyConfig(cfg){
+  function applyConfig(cfg, fromSave){
     if(!cfg || typeof cfg !== "object") return;
     window.APP_CONFIG = cfg;
     var changed = false;
@@ -1806,7 +1818,7 @@
     if(changed && typeof buildMoodChips === "function") buildMoodChips();
     var ag = cfg.agent || {};
     if(ag.weatherCity){ WEATHER_CITY = ag.weatherCity; }         // 天气城市
-    if(window.petApplyConfig) window.petApplyConfig(ag);         // 桌宠 agent 设置（跨作用域桥接）
+    if(window.petApplyConfig) window.petApplyConfig(ag, fromSave);   // 桌宠 agent 设置（跨作用域桥接）
   }
   function pullConfig(){
     fetch("/config").then(function(r){ return r.ok ? r.json() : null; }).then(function(cfg){ if(cfg) applyConfig(cfg); }).catch(function(){});
@@ -1892,7 +1904,7 @@
         agent: { workStart:elWorkStart.value || "08:45", workEnd:elWorkEnd.value || "18:00", weatherCity:(elWeather.value || "").trim(), activePet:elActivePet.value || "", pets:pets }
       };
       status("保存中…");
-      postConfig(cfg, function(ok, info){ if(ok){ status("已保存并同步 ✓", "ok"); applyConfig(cfg); } else { status("失败：" + info, "err"); } });
+      postConfig(cfg, function(ok, info){ if(ok){ status("已保存并同步 ✓", "ok"); applyConfig(cfg, true); } else { status("失败：" + info, "err"); } });
     }
 
     document.getElementById("cfgClose").addEventListener("click", close);
@@ -3119,7 +3131,7 @@
     (function(){ var box = document.getElementById("petSwitch"); if(box) box.addEventListener("click", function(e){ var b = e.target.closest(".petsw"); if(b) setActivePet(b.getAttribute("data-pet"), true); }); })();
     function memoBlock(){
       var q=[];
-      if(mem.name) q.push("称呼："+mem.name);
+      q.push("称呼：" + (mem.name || "小主人"));
       if(mem.facts.length) q.push("已知偏好："+mem.facts.slice(0,8).join("、"));
       q.push("你俩已一起上班 "+(mem.days||1)+" 天");
       return q.join("；");
@@ -3221,19 +3233,21 @@
       return localReply(t) + (learned ? (((PETS[activePetId]||{}).offline||{}).learned || "（记住啦~）") : "");
     }
     // AI 内核：两个入口共用（小气泡 + 唠嗑 tab），维护同一条 petHistory/记忆
-    function askPet(msg, done){
+    function askPet(msg, done, brief){
       petHistory.push({ role:"user", content:msg }); petHistory=petHistory.slice(-8);
       var d=new Date(), hhmm=("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2);
       var wx = window.petWeather ? ("\n【成都武侯区实时天气】" + window.petWeather + "（真实数据，ta 问天气就照这个答，别自己编）") : "";
       var sys = "你和 DeepSeek 本体一样聪明能干、有求必应——写计划、做推荐、讲笑话、出主意、答疑解惑，什么都能认真做好、做到位。下面给你的只是一层「说话风格/人设」，那是你的声音，绝不削弱你的真实能力。"
         + "\n【铁律】1) ta 让你做啥就真去做、给出像样的结果：写旅行计划就真写出行程/交通/吃住；推荐吃的就给几个具体选择加理由；讲笑话就讲个真好笑的。**绝对禁止推脱**：不许说「我小脑袋装不下」「你说来听听呀」「这个我不太会」这类把问题踢回去或糊弄的话——DeepSeek 不会这样，你也不许。2) 内容要真实、具体、有用，用你的口吻包装，但先把事办了。3) 长度看事情：闲聊就短；要展开的（计划/攻略/推荐/讲解）就好好展开，别硬憋短。4) 每次尽量换着说、别老一套。5) 手边的真实时间/天气/位置能用就用（推荐吃的结合现在几点、天气冷热）。6) 只有真拿不到的实时信息（今天新闻、股价）才说不知道，别拿它当推脱借口。"
+        + "\n【称呼与调教】默认叫 ta「小主人」；如果 ta 让你改称呼、改说话风格或性格（比如「叫我宝贝」「回复短一点」「你可以更毒舌」），要记住并从此照做，把这类要求放进 remember。"
         + "\n【你的说话风格】" + CHAR
         + "\n【关于小主人】" + memoBlock() + "。现在 " + hhmm + "，" + scheduleLine() + "。" + wx
-        + "\n只输出 JSON：{\"reply\":\"你的回话\",\"name\":\"ta 说了自己叫啥就填、否则空串\",\"remember\":[\"ta 透露的值得长期记住的偏好/习惯就填简短短语、否则空数组\"]}";
+        + (brief ? "\n【本次务必简短】现在是气泡快聊，一两句话说完，别长篇。" : "")
+        + "\n只输出 JSON：{\"reply\":\"你的回话\",\"name\":\"ta 说了自己叫啥就填、否则空串\",\"remember\":[\"ta 透露的值得长期记住的偏好/习惯/对你的调教要求就填简短短语、否则空数组\"]}";
       var ctrl=("AbortController" in window)?new AbortController():null;
       var timer=ctrl?setTimeout(function(){ ctrl.abort(); },40000):null;
       fetch(AI_URL, { method:"POST", headers:{ "Content-Type":"application/json" }, signal:ctrl?ctrl.signal:undefined,
-        body: JSON.stringify({ model:"deepseek-chat", response_format:{ type:"json_object" }, messages:[{role:"system",content:sys}].concat(petHistory.slice(-6)), temperature:1.15, max_tokens:1000, stream:false }) })
+        body: JSON.stringify({ model:"deepseek-chat", response_format:{ type:"json_object" }, messages:[{role:"system",content:sys}].concat(petHistory.slice(-6)), temperature:1.15, max_tokens:(brief?160:1000), stream:false }) })
         .then(function(r){ if(!r.ok) throw new Error("http"); return r.json(); })
         .then(function(j){ var t=(j&&j.choices&&j.choices[0]&&j.choices[0].message&&j.choices[0].message.content||"").trim(); if(!t) throw new Error("empty"); return t; })
         .catch(function(){ return null; })
@@ -3267,7 +3281,7 @@
         pushMsg("pet", reply);
         react(dance?"dance":"wave", reply, 5200);
         petBusy=false; try{ chatInput.focus(); }catch(e){}
-      });
+      }, true);   // 气泡快聊 → 简短
     }
     // 进唠嗑 tab：渲染历史（空则问候）+ 聚焦输入
     function petChatEnter(){
@@ -3278,7 +3292,7 @@
     }
     window.petChatEnter = petChatEnter;
     // 应用配置中心的 agent 设置（作息 / 人设 / 名字 / 默认形象）——主作用域 applyConfig 调用
-    window.petApplyConfig = function(agent){
+    window.petApplyConfig = function(agent, fromSave){
       if(!agent || typeof agent !== "object") return;
       if(/^\d{1,2}:\d{2}$/.test(agent.workStart || "")){ var a = agent.workStart.split(":"); WORK_START = (+a[0]) * 60 + (+a[1]); }
       if(/^\d{1,2}:\d{2}$/.test(agent.workEnd || "")){ var b = agent.workEnd.split(":"); WORK_END = (+b[0]) * 60 + (+b[1]); }
@@ -3293,9 +3307,12 @@
         });
       }
       var saved = null; try{ saved = localStorage.getItem(PET_ACTIVE_KEY); }catch(e){}
-      // 配置里的「默认形象」优先生效（在设置页切了就真的切）；没设才回落到本地选择
-      var target = (agent.activePet && PETS[agent.activePet]) ? agent.activePet : ((saved && PETS[saved]) ? saved : activePetId);
-      setActivePet(target, false);   // 重新应用 CHAR/精灵图/名字/brand
+      var target;
+      if(fromSave && agent.activePet && PETS[agent.activePet]) target = agent.activePet;   // 在设置页切默认形象+保存 → 强制生效
+      else if(saved && PETS[saved]) target = saved;                                        // 平时加载 → 优先本地记住的（切换会被记住）
+      else if(agent.activePet && PETS[agent.activePet]) target = agent.activePet;
+      else target = activePetId;
+      setActivePet(target, false);   // setActivePet 内部会 persist，重新应用 CHAR/精灵图/名字/brand
     };
     // 给配置面板读当前 agent 设置（名字/人设/作息/默认形象）
     window.petGetConfig = function(){
@@ -3331,7 +3348,7 @@
       react("jump","呜姆姆…好吃！谢谢小主人 😋（已喂 "+mem.feeds+" 次）",4200);
     }
     function getHungry(){ if(document.hidden||petBusy||!chat.hidden||isNight()||hungry) return; hungry=true; react("wave","有点饿了喵…戳我喂点吃的呗 🍖",6000); }
-    function statsLine(){ return (mem.name?mem.name+"，":"")+"咱一起上班第 "+(mem.days||1)+" 天啦,你喂了我 "+(mem.feeds||0)+" 次 🐾"; }
+    function statsLine(){ return (mem.name||"小主人")+"，咱一起上班第 "+(mem.days||1)+" 天啦,你喂了我 "+(mem.feeds||0)+" 次 🐾"; }
     function onTap(){
       if(pet.classList.contains("pet-asleep")){ awake=true; applySleep(); react("wave","唔…被吵醒了喵 🥱",3000); return; }
       if(hungry){ feed(); return; }
@@ -3341,7 +3358,7 @@
     }
     // ---- 开场问候（认人 + 一起上班天数 + 好久不见）+ 偶尔碎碎念 ----
     function greetLine(){
-      var hi = mem.name ? (mem.name + "，") : "";
+      var hi = (mem.name || "小主人") + "，";
       if(mem.gap >= 2) return hi + "好几天没见你了，想死我了喵 🥺 " + scheduleLine();
       if(mem.days > 1 && Math.random() < 0.5) return hi + scheduleLine() + "（一起上班第 " + mem.days + " 天啦）";
       return hi + scheduleLine();
@@ -3355,7 +3372,7 @@
       if(r < 0.12){ dropCoins(); react("wave", "接住这波好运喵～ 🧧", 3600); }
       else if(r < 0.22){ getHungry(); }
       else if(r < 0.30){ react("wave", statsLine(), 4600); }
-      else if(r < 0.42){ if(Math.random() < 0.4){ react("dance", (mem.name ? mem.name + "，" : "") + "给你跳个舞喵～ 💃", 3600); } else { var line = scheduleLine(); if(mem.name && Math.random() < 0.45) line = mem.name + "，" + line; react("wave", line, 4200); } }
+      else if(r < 0.42){ if(Math.random() < 0.4){ react("dance", (mem.name || "小主人") + "，给你跳个舞喵～ 💃", 3600); } else { var line = scheduleLine(); if(Math.random() < 0.45) line = (mem.name || "小主人") + "，" + line; react("wave", line, 4200); } }
     }, 90000);
   })();
 </script>
