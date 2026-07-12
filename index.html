@@ -3235,7 +3235,7 @@
     }
     // AI 内核：两个入口共用（小气泡 + 唠嗑 tab），维护同一条 petHistory/记忆
     function askPet(msg, done, brief){
-      petHistory.push({ role:"user", content:msg }); petHistory=petHistory.slice(-8);
+      petHistory.push({ role:"user", content:msg }); petHistory=petHistory.slice(-24);
       var d=new Date(), hhmm=("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2);
       var wx = window.petWeather ? ("\n【成都武侯区实时天气】" + window.petWeather + "（真实数据，ta 问天气就照这个答，别自己编）") : "";
       var sys = "你和 DeepSeek 本体一样聪明能干、有求必应——写计划、做推荐、讲笑话、出主意、答疑解惑，什么都能认真做好、做到位。下面给你的只是一层「说话风格/人设」，那是你的声音，绝不削弱你的真实能力。"
@@ -3249,16 +3249,20 @@
       var ctrl=("AbortController" in window)?new AbortController():null;
       var timer=ctrl?setTimeout(function(){ ctrl.abort(); },40000):null;
       fetch(AI_URL, { method:"POST", headers:{ "Content-Type":"application/json" }, signal:ctrl?ctrl.signal:undefined,
-        body: JSON.stringify({ model:"deepseek-chat", response_format:{ type:"json_object" }, messages:[{role:"system",content:sys}].concat(petHistory.slice(-6)), temperature:1.15, max_tokens:(brief?160:1000), stream:false }) })
+        body: JSON.stringify({ model:"deepseek-chat", response_format:{ type:"json_object" }, messages:[{role:"system",content:sys}].concat(petHistory.slice(-16)), temperature:1.15, max_tokens:(brief?160:1000), stream:false }) })
         .then(function(r){ if(!r.ok) throw new Error("http"); return r.json(); })
         .then(function(j){ var t=(j&&j.choices&&j.choices[0]&&j.choices[0].message&&j.choices[0].message.content||"").trim(); if(!t) throw new Error("empty"); return t; })
         .catch(function(){ return null; })
         .then(function(t){
           if(timer) clearTimeout(timer);
-          var reply="";
+          var reply="", failed=false;
           if(t){ try{ var v=JSON.parse(t); reply=(v.reply||"").trim(); if(v.name){ mem.name=String(v.name).trim().slice(0,8); saveMem(); } addFacts(v.remember); }catch(e2){} }
-          if(!reply){ reply = t ? localReply(msg) : localLearn(msg); }
-          petHistory.push({ role:"assistant", content:reply }); petHistory=petHistory.slice(-8);
+          if(!reply){
+            if(t){ reply = localReply(msg); }   // 拿到响应但解析失败（少见）→ 本地兜底
+            else { failed=true; try{ localLearn(msg); }catch(e3){} reply = "（呜…我这会儿网有点卡，没接住你这句，再发一遍好嘛 🥺）"; }   // AI 没连上 → 老实说卡了，别装作在回答
+          }
+          if(failed){ petHistory.pop(); }   // AI 失败：把这条 user 从上下文撤掉，别污染、方便重发
+          else { petHistory.push({ role:"assistant", content:reply }); petHistory=petHistory.slice(-24); }
           mem.affinity=(mem.affinity||0)+1; saveMem();
           done(reply, /跳舞|蹦迪|dance|来个舞|跳个舞|扭一个/i.test(msg));
         });
