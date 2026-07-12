@@ -488,8 +488,20 @@
   .petsw.active{ color:var(--accent,#007aff); font-weight:700; }
   .petsw.active .petsw-ava{ box-shadow:0 0 0 2.5px var(--accent,#007aff); }
   .petsw-hint{ margin-left:auto; font-size:.74rem; color:var(--ink-3,#8a8a8e); align-self:center; }
-  .petsw-clear{ margin-left:8px; align-self:center; border:1px solid rgba(0,0,0,.12); background:transparent; color:var(--ink-3,#8e8e93); border-radius:9px; padding:3px 9px; font-size:.72rem; cursor:pointer; font-family:var(--font); }
+  .petsw-clear{ margin-left:8px; align-self:center; border:1px solid rgba(0,0,0,.12); background:transparent; color:var(--ink-3,#8e8e93); border-radius:9px; padding:3px 9px; font-size:.72rem; cursor:pointer; font-family:var(--font); white-space:nowrap; }
   .petsw-clear:active{ transform:scale(.94); }
+  .petsw-mem{ margin-left:auto; }
+  /* 记忆板块 */
+  .mem-sec{ margin-top:4px; }
+  .mem-facts{ display:flex; flex-direction:column; gap:7px; margin:8px 0 12px; }
+  .mem-fact{ display:flex; align-items:center; gap:9px; background:var(--fill,#f0f0f4); border-radius:11px; padding:8px 11px; }
+  .mem-fact span{ flex:1 1 auto; font-size:.86rem; color:var(--ink,#1d1d1f); word-break:break-word; }
+  .mem-fact button{ flex:0 0 auto; border:none; background:transparent; color:var(--ink-3,#8e8e93); width:22px; height:22px; border-radius:7px; font-size:.95rem; cursor:pointer; }
+  .mem-empty{ font-size:.82rem; color:var(--ink-3,#8e8e93); padding:6px 2px; }
+  .mem-add{ display:flex; gap:8px; }
+  .mem-add input{ flex:1 1 auto; min-width:0; border:1px solid rgba(0,0,0,.14); border-radius:10px; padding:8px 11px; font-family:var(--font); font-size:.86rem; color:var(--ink,#1d1d1f); outline:none; }
+  .mem-add input:focus{ border-color:var(--accent,#007aff); }
+  .mem-add button{ flex:0 0 auto; border:none; background:var(--accent,#007aff); color:#fff; border-radius:10px; padding:8px 15px; font-size:.86rem; font-weight:600; cursor:pointer; font-family:var(--font); }
   /* 配置中心 modal */
   .cfg-modal{ position:fixed; inset:0; z-index:200; display:flex; align-items:center; justify-content:center; padding:16px; background:rgba(0,0,0,.42); backdrop-filter:blur(3px); }
   .cfg-modal[hidden]{ display:none; }
@@ -733,7 +745,7 @@
         <div class="pet-switch" id="petSwitch">
           <button type="button" class="petsw" data-pet="yuexinmiao"><i class="petsw-ava" style="--sheet:url('pet/yuexinmiao.webp')"></i><span class="petsw-name">月薪喵</span></button>
           <button type="button" class="petsw" data-pet="haoyunlai"><i class="petsw-ava" style="--sheet:url('pet/haoyunlai.webp')"></i><span class="petsw-name">好运来</span></button>
-          <span class="petsw-hint">点头像换个搭子~</span>
+          <button type="button" class="petsw-clear petsw-mem" id="memBtn" title="它记得你什么">🧠 记忆</button>
           <button type="button" class="petsw-clear" id="chatClear" title="清空这段聊天">清空</button>
         </div>
         <div class="chat-log" id="chatLog" role="log" aria-live="polite"></div>
@@ -815,6 +827,25 @@
         <span class="cfg-status" id="cfgStatus"></span>
         <button type="button" class="cfg-save" id="cfgSave">保存并同步</button>
       </div>
+    </div>
+  </div>
+
+  <!-- 记忆板块：它记得你什么 -->
+  <div id="memModal" class="cfg-modal" hidden aria-label="桌宠记忆">
+    <div class="cfg-card">
+      <div class="cfg-head">
+        <span class="cfg-title">🧠 它记得你</span>
+        <button type="button" class="cfg-x" id="memClose" aria-label="关闭">✕</button>
+      </div>
+      <div class="cfg-body">
+        <div class="cfg-row"><label>它叫你</label><input type="text" id="memName" placeholder="小主人" maxlength="12"></div>
+        <section class="cfg-sec mem-sec">
+          <h3>它记得的事</h3>
+          <div id="memFacts" class="mem-facts"></div>
+          <div class="mem-add"><input type="text" id="memAddInput" placeholder="加一条它该记住的…" maxlength="28"><button type="button" id="memAddBtn">加</button></div>
+        </section>
+      </div>
+      <div class="cfg-foot"><span class="cfg-status" id="memStatus">改了马上生效，桌宠立刻就记得</span></div>
     </div>
   </div>
 
@@ -3138,6 +3169,25 @@
       chatData = []; petHistory = []; saveChat(); renderChat();
       pushMsg("pet", greetLine(), true);   // 清完重新打个招呼，别留白
     }); })();
+    // 记忆板块：它记得你什么（查看 / 删 / 补）
+    (function(){
+      var modal = document.getElementById("memModal"); if(!modal) return;
+      var nameEl = document.getElementById("memName"), factsEl = document.getElementById("memFacts"), addInp = document.getElementById("memAddInput");
+      function escH(s){ return String(s).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]; }); }
+      function render(){
+        nameEl.value = mem.name || "";
+        if(!mem.facts || !mem.facts.length){ factsEl.innerHTML = '<div class="mem-empty">还没记住啥～ 多聊聊，或在下面加一条。</div>'; return; }
+        factsEl.innerHTML = mem.facts.map(function(f, i){ return '<div class="mem-fact"><span>' + escH(f) + '</span><button type="button" data-i="' + i + '" aria-label="删除">✕</button></div>'; }).join("");
+      }
+      function addFact(){ var v = (addInp.value || "").trim(); if(!v) return; addFacts([v]); addInp.value = ""; render(); }
+      nameEl.addEventListener("change", function(){ mem.name = (nameEl.value || "").trim().slice(0,12); saveMem(); });
+      factsEl.addEventListener("click", function(e){ var b = e.target.closest("button[data-i]"); if(!b) return; mem.facts.splice(+b.getAttribute("data-i"), 1); saveMem(); render(); });
+      document.getElementById("memAddBtn").addEventListener("click", addFact);
+      addInp.addEventListener("keydown", function(e){ if(e.key === "Enter"){ e.preventDefault(); addFact(); } });
+      document.getElementById("memClose").addEventListener("click", function(){ modal.hidden = true; });
+      modal.addEventListener("click", function(e){ if(e.target === modal) modal.hidden = true; });
+      var mb = document.getElementById("memBtn"); if(mb) mb.addEventListener("click", function(){ render(); modal.hidden = false; });
+    })();
     function memoBlock(){
       var q=[];
       q.push("称呼：" + (mem.name || "小主人"));
