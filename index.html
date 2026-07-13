@@ -3305,27 +3305,29 @@
         + "\n【关于小主人】" + memoBlock() + "。现在 " + hhmm + "，" + scheduleLine() + "。" + wx
         + (brief ? "\n【本次务必简短】现在是气泡快聊，一两句话说完，别长篇。" : "")
         + "\n只输出 JSON：{\"reply\":\"你的回话\",\"name\":\"ta 说了自己叫啥/想被叫啥就填、否则空串\",\"remember\":[\"ta 是谁、性格特点、喜好、在意的人和事、生活习惯、对你的调教要求——凡是值得长期记住的都填简短短语(可多条)、否则空数组\"]}";
-      var ctrl=("AbortController" in window)?new AbortController():null;
-      var timer=ctrl?setTimeout(function(){ ctrl.abort(); },40000):null;
-      var dbg = "";
-      fetch(AI_URL, { method:"POST", headers:{ "Content-Type":"application/json" }, signal:ctrl?ctrl.signal:undefined,
-        body: JSON.stringify({ model:"deepseek-chat", response_format:{ type:"json_object" }, messages:[{role:"system",content:sys}].concat(petHistory.slice(-100)), temperature:1.15, max_tokens:(brief?160:1000), stream:false }) })
-        .then(function(r){ if(!r.ok){ dbg = "HTTP " + r.status; return r.text().then(function(b){ if(r.status===402 || /[Bb]alance|余额|欠费/.test(b)) dbg += "·余额不足💰"; else if(r.status===503 || /limit/i.test(b)) dbg += "·限流"; else if(r.status===401 || /invalid|auth|api.?key/i.test(b)) dbg += "·key无效"; else if(r.status===404) dbg += "·代理没配好"; return null; }, function(){ return null; }); } return r.json(); })
-        .then(function(j){ if(j === null) return null; var t=(j&&j.choices&&j.choices[0]&&j.choices[0].message&&j.choices[0].message.content||"").trim(); if(!t){ dbg = dbg || "AI 返回空"; return null; } return t; })
-        .catch(function(){ if(!dbg) dbg = "连不上/超时"; return null; })
-        .then(function(t){
-          if(timer) clearTimeout(timer);
-          var reply="", failed=false;
-          if(t){ try{ var v=JSON.parse(t); reply=(v.reply||"").trim(); if(v.name){ mem.name=String(v.name).trim().slice(0,8); saveMem(); } addFacts(v.remember); }catch(e2){} }
-          if(!reply){
-            if(t){ reply = localReply(msg); }   // 拿到响应但解析失败（少见）→ 本地兜底
-            else { failed=true; try{ localLearn(msg); }catch(e3){} reply = "（诶…没接住你这句 😣 原因【" + (dbg || "网络") + "】—— 截图发给管理员就能修）"; }   // AI 失败 → 显示具体原因，方便定位
-          }
-          if(failed){ petHistory.pop(); }   // AI 失败：把这条 user 从上下文撤掉，别污染、方便重发
-          else { petHistory.push({ role:"assistant", content:reply }); petHistory=petHistory.slice(-100); }
-          mem.affinity=(mem.affinity||0)+1; saveMem();
-          done(reply, /跳舞|蹦迪|dance|来个舞|跳个舞|扭一个/i.test(msg));
-        });
+      function finishOK(reply){ petHistory.push({ role:"assistant", content:reply }); petHistory=petHistory.slice(-100); mem.affinity=(mem.affinity||0)+1; saveMem(); done(reply, /跳舞|蹦迪|dance|来个舞|跳个舞|扭一个/i.test(msg)); }
+      function attempt(n){
+        var ctrl=("AbortController" in window)?new AbortController():null;
+        var timer=ctrl?setTimeout(function(){ ctrl.abort(); },40000):null;
+        var dbg = "";
+        fetch(AI_URL, { method:"POST", headers:{ "Content-Type":"application/json" }, signal:ctrl?ctrl.signal:undefined,
+          body: JSON.stringify({ model:"deepseek-chat", response_format:{ type:"json_object" }, messages:[{role:"system",content:sys}].concat(petHistory.slice(-100)), temperature:(n>1?0.9:1.15), max_tokens:(brief?160:1000), stream:false }) })
+          .then(function(r){ if(!r.ok){ dbg = "HTTP " + r.status; return r.text().then(function(b){ if(r.status===402 || /[Bb]alance|余额|欠费/.test(b)) dbg += "·余额不足💰"; else if(r.status===503 || /limit/i.test(b)) dbg += "·限流"; else if(r.status===401 || /invalid|auth|api.?key/i.test(b)) dbg += "·key无效"; else if(r.status===404) dbg += "·代理没配好"; return null; }, function(){ return null; }); } return r.json(); })
+          .then(function(j){ if(j === null) return null; var t=(j&&j.choices&&j.choices[0]&&j.choices[0].message&&j.choices[0].message.content||"").trim(); if(!t){ dbg = dbg || "AI 返回空"; return null; } return t; })
+          .catch(function(){ if(!dbg) dbg = "连不上/超时"; return null; })
+          .then(function(t){
+            if(timer) clearTimeout(timer);
+            var reply="";
+            if(t){ try{ var v=JSON.parse(t); reply=(v.reply||"").trim(); if(v.name){ mem.name=String(v.name).trim().slice(0,8); saveMem(); } addFacts(v.remember); }catch(e2){} }
+            if(reply){ finishOK(reply); return; }                       // 成功
+            if(t){ finishOK(localReply(msg)); return; }                 // 有响应但解析失败（少见）→ 本地兜底、不重试
+            if(n < 2){ attempt(n + 1); return; }                        // AI 失败/返回空 → 自动重试一次（重试降温更稳）
+            try{ localLearn(msg); }catch(e3){}                          // 两次都失败 → 诚实降级 + 撤掉 user 不污染
+            petHistory.pop();
+            done("（诶…试了两次都没接住 😣 原因【" + (dbg || "网络") + "】—— 截图发给管理员就能修）", false);
+          });
+      }
+      attempt(1);
     }
     // 唠嗑 tab：整页对话流
     function sendTab(msg){
