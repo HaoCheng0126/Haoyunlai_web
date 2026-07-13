@@ -3069,7 +3069,7 @@
     var tabChips = document.getElementById("chatChips");
     var CLS = { idle:"", wave:"pet-wave", jump:"pet-jump", sad:"pet-sad", think:"pet-think", dance:"pet-dance" };
     var DUR = { wave:2100, jump:1680, sad:2440, think:2060, dance:3200 };
-    var POS_KEY = "moyu-pet-pos-v1", AI_URL = "/tarot-ai";
+    var POS_KEY = "moyu-pet-pos-v1", AI_URL = "/pet-ai";   // 桌宠走豆包（塔罗/挑战仍走 /tarot-ai=DeepSeek）
     var WORK_START = 8*60+45, WORK_END = 18*60;   // 小主人 8:45 上班 · 18:00 下班
     var revertT = null, bubbleT = null, petBusy = false;
 
@@ -3311,14 +3311,14 @@
         var timer=ctrl?setTimeout(function(){ ctrl.abort(); },40000):null;
         var dbg = "";
         fetch(AI_URL, { method:"POST", headers:{ "Content-Type":"application/json" }, signal:ctrl?ctrl.signal:undefined,
-          body: JSON.stringify({ model:"deepseek-chat", response_format:{ type:"json_object" }, messages:[{role:"system",content:sys}].concat(petHistory.slice(-100)), temperature:(n>1?0.9:1.15), max_tokens:(brief?160:1000), stream:false }) })
+          body: JSON.stringify({ model:"doubao-seed-2-0-mini-260428", response_format:{ type:"json_object" }, messages:[{role:"system",content:sys}].concat(petHistory.slice(-100)), temperature:(n>1?0.9:1.15), max_tokens:(brief?160:1000), stream:false }) })
           .then(function(r){ if(!r.ok){ dbg = "HTTP " + r.status; return r.text().then(function(b){ if(r.status===402 || /[Bb]alance|余额|欠费/.test(b)) dbg += "·余额不足💰"; else if(r.status===503 || /limit/i.test(b)) dbg += "·限流"; else if(r.status===401 || /invalid|auth|api.?key/i.test(b)) dbg += "·key无效"; else if(r.status===404) dbg += "·代理没配好"; return null; }, function(){ return null; }); } return r.json(); })
           .then(function(j){ if(j === null) return null; var t=(j&&j.choices&&j.choices[0]&&j.choices[0].message&&j.choices[0].message.content||"").trim(); if(!t){ dbg = dbg || "AI 返回空"; return null; } return t; })
           .catch(function(){ if(!dbg) dbg = "连不上/超时"; return null; })
           .then(function(t){
             if(timer) clearTimeout(timer);
             var reply="";
-            if(t){ try{ var v=JSON.parse(t); reply=(v.reply||"").trim(); if(v.name){ mem.name=String(v.name).trim().slice(0,8); saveMem(); } addFacts(v.remember); }catch(e2){} }
+            if(t){ try{ var jt=t.replace(/^```(?:json)?\s*/i,"").replace(/\s*```$/,"").trim(); var mt=jt.match(/\{[\s\S]*\}/); var v=JSON.parse(mt?mt[0]:jt); reply=(v.reply||"").trim(); if(v.name){ mem.name=String(v.name).trim().slice(0,8); saveMem(); } addFacts(v.remember); }catch(e2){} }
             if(reply){ finishOK(reply); return; }                       // 成功
             if(t){ finishOK(localReply(msg)); return; }                 // 有响应但解析失败（少见）→ 本地兜底、不重试
             if(n < 2){ attempt(n + 1); return; }                        // AI 失败/返回空 → 自动重试一次（重试降温更稳）
