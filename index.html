@@ -3259,7 +3259,7 @@
     function setState(s){ sprite.className = "pet-sprite" + (CLS[s] ? " " + CLS[s] : ""); }
     function playOnce(s){ if(revertT) clearTimeout(revertT); setState(s); revertT = setTimeout(function(){ setState("idle"); }, DUR[s] || 1600); }
     function voice(text){ return (PETS[activePetId] && PETS[activePetId].noMeow) ? String(text).replace(/喵[~～]?/g, "") : text; }   // 不喵的桌宠（如好运来）滤掉"喵"
-    function say(text, ms){ bubble.textContent = voice(text); bubble.hidden = false; if(bubbleT) clearTimeout(bubbleT); bubbleT = setTimeout(function(){ bubble.hidden = true; }, ms || 3600); }
+    function say(text, ms){ bubble.textContent = voice(text); bubble.hidden = false; if(pet.style.left){ applyPos(parseFloat(pet.style.left), parseFloat(pet.style.top)); } if(bubbleT) clearTimeout(bubbleT); bubbleT = setTimeout(function(){ bubble.hidden = true; }, ms || 3600); }
     function react(state, text, ms){ if(state && state !== "idle") playOnce(state); if(text) say(text, ms); }
     window.petReact = react;
 
@@ -3277,7 +3277,12 @@
     function greetState(){ var d=new Date(), now=d.getHours()*60+d.getMinutes(); return (now>=WORK_START-45 && now<WORK_START) ? "jump" : "wave"; }
 
     // ---- 拖动 ----
-    function clampPos(l,t){ var w=pet.offsetWidth,h=pet.offsetHeight; return [Math.max(4,Math.min(l,innerWidth-w-4)), Math.max(4,Math.min(t,innerHeight-h-4))]; }
+    function clampPos(l,t){
+      var w=pet.offsetWidth, h=pet.offsetHeight;
+      var bar=document.querySelector(".mode-switch");
+      var reserve=(innerWidth<=480 && bar) ? bar.offsetHeight+8 : 8;   // 手机端底部给 tab 留位，桌宠不许压上去挡点击
+      return [ Math.max(4, Math.min(l, innerWidth-w-4)), Math.max(4, Math.min(t, innerHeight-h-reserve)) ];
+    }
     function applyPos(l,t){ var c=clampPos(l,t); pet.style.left=c[0]+"px"; pet.style.top=c[1]+"px"; pet.style.right="auto"; pet.style.bottom="auto"; }
     var saved=null; try{ saved=JSON.parse(localStorage.getItem(POS_KEY)); }catch(e){}
     if(saved && typeof saved.left==="number"){ setTimeout(function(){ applyPos(saved.left, saved.top); }, 0); }
