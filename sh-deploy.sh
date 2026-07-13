@@ -4,10 +4,10 @@
 COMMIT="${COMMIT:-main}"
 ROOT=/www/wwwroot/wheel
 MIRRORS=(
+  "https://raw.gitmirror.com/HaoCheng0126/Haoyunlai_web/$COMMIT"
   "https://gcore.jsdelivr.net/gh/HaoCheng0126/Haoyunlai_web@$COMMIT"
   "https://testingcf.jsdelivr.net/gh/HaoCheng0126/Haoyunlai_web@$COMMIT"
   "https://fastly.jsdelivr.net/gh/HaoCheng0126/Haoyunlai_web@$COMMIT"
-  "https://raw.gitmirror.com/HaoCheng0126/Haoyunlai_web/$COMMIT"
 )
 fetch(){ for b in "${MIRRORS[@]}"; do curl -fsSL --max-time 25 "$b/$1" -o "$2.tmp" 2>/dev/null && [ -s "$2.tmp" ] && { mv "$2.tmp" "$2"; return 0; }; done; rm -f "$2.tmp"; return 1; }
 mkdir -p "$ROOT/cards"; cd "$ROOT" || exit 1
