@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="color-scheme" content="light">
 <title>好运来 · 摸鱼 / 干饭 / 塔罗</title>
 <style>
@@ -23,7 +23,7 @@
     --font:-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
   }
   *,*::before,*::after{ box-sizing:border-box; }
-  html,body{ margin:0; padding:0; }
+  html,body{ margin:0; padding:0; touch-action:manipulation; }   /* 关掉双击放大（保留滚动/拖动）*/
   html{ -webkit-text-size-adjust:100%; overflow-x:clip; }
   body{
     font-family:var(--font); color:var(--ink);
@@ -860,6 +860,10 @@
 <script>
 (function(){
   "use strict";
+
+  // 禁止手机端缩放：iOS Safari 无视 viewport 的 user-scalable，需手动拦双指缩放（双击放大已由 CSS touch-action:manipulation 关掉）
+  document.addEventListener("gesturestart", function(e){ e.preventDefault(); }, { passive:false });
+  document.addEventListener("gesturechange", function(e){ e.preventDefault(); }, { passive:false });
 
   /* ============================================================
      高德地图配置（部署前必填！去 https://console.amap.com/dev 免费申请）
