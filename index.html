@@ -543,6 +543,8 @@
   .cfg-pw:focus{ border-color:var(--accent,#007aff); }
   .cfg-status{ flex:1 1 auto; font-size:.78rem; color:var(--ink-3,#8e8e93); }
   .cfg-status.ok{ color:#34c759; } .cfg-status.err{ color:#ff3b30; }
+  .cfg-keystate{ font-weight:400; font-size:.72rem; color:var(--ink-3,#8e8e93); margin-left:4px; }
+  .cfg-keystate.ok{ color:#34c759; }
   .cfg-save{ flex:0 0 auto; border:none; background:var(--accent,#007aff); color:#fff; border-radius:11px; padding:9px 16px; font-size:.86rem; font-weight:700; cursor:pointer; font-family:var(--font); }
   .cfg-save:active{ transform:scale(.96); }
   @media (max-width:480px){
@@ -820,6 +822,12 @@
         <section class="cfg-sec">
           <h3>💬 桌宠人设</h3>
           <div id="cfgPets"></div>
+        </section>
+        <section class="cfg-sec">
+          <h3>🔑 AI Key（只写不读）</h3>
+          <p class="cfg-hint">安全起见页面永不显示真实 key，只能替换。留空 = 不改。保存后自动生效（后端写入 nginx 并热加载）。</p>
+          <div class="cfg-row"><label>DeepSeek <small id="cfgDsState" class="cfg-keystate">…</small></label><input type="password" id="cfgDsKey" placeholder="sk-… 留空不改" autocomplete="off" maxlength="256"></div>
+          <div class="cfg-row"><label>豆包 <small id="cfgDbState" class="cfg-keystate">…</small></label><input type="password" id="cfgDbKey" placeholder="ark-… 留空不改" autocomplete="off" maxlength="256"></div>
         </section>
       </div>
       <div class="cfg-foot">
@@ -1905,7 +1913,15 @@
     var elActivePet = document.getElementById("cfgActivePet"), elWorkStart = document.getElementById("cfgWorkStart");
     var elWorkEnd = document.getElementById("cfgWorkEnd"), elWeather = document.getElementById("cfgWeather");
     var elPw = document.getElementById("cfgPw"), elStatus = document.getElementById("cfgStatus");
+    var elDsKey = document.getElementById("cfgDsKey"), elDbKey = document.getElementById("cfgDbKey");
+    var elDsState = document.getElementById("cfgDsState"), elDbState = document.getElementById("cfgDbState");
     function status(msg, cls){ elStatus.textContent = msg || ""; elStatus.className = "cfg-status" + (cls ? " " + cls : ""); }
+    function renderKeys(){
+      var ks = (window.APP_CONFIG || {}).keys || {};
+      if(elDsState){ elDsState.textContent = ks.deepseek ? "已设置 ✓" : "未设置"; elDsState.className = "cfg-keystate" + (ks.deepseek ? " ok" : ""); }
+      if(elDbState){ elDbState.textContent = ks.doubao ? "已设置 ✓" : "未设置"; elDbState.className = "cfg-keystate" + (ks.doubao ? " ok" : ""); }
+      if(elDsKey) elDsKey.value = ""; if(elDbKey) elDbKey.value = "";   // 永不预填真实 key
+    }
 
     function renderMoods(){
       elMoods.innerHTML = "";
@@ -1950,7 +1966,7 @@
       });
     }
 
-    function open(){ renderMoods(); renderAgent(); status(""); elPw.value = localStorage.getItem(CONFIGPW_KEY) || ""; modal.hidden = false; }
+    function open(){ renderMoods(); renderAgent(); renderKeys(); status(""); elPw.value = localStorage.getItem(CONFIGPW_KEY) || ""; modal.hidden = false; }
     function close(){ modal.hidden = true; }
     function save(){
       var pw = (elPw.value || "").trim();
@@ -1960,13 +1976,23 @@
       [].forEach.call(elPets.querySelectorAll(".cfg-pet"), function(box){
         pets[box.dataset.pet] = { name:(box.querySelector(".cfg-pet-name").value || "").trim(), char:(box.querySelector(".cfg-pet-char").value || "").trim() };
       });
+      var dsKey = ((elDsKey && elDsKey.value) || "").trim(), dbKey = ((elDbKey && elDbKey.value) || "").trim();
       var cfg = {
         moods: moodList.map(function(m){ return { id:m.id, label:m.label }; }),
         pics: moodPics,
         agent: { workStart:elWorkStart.value || "08:45", workEnd:elWorkEnd.value || "18:00", weatherCity:(elWeather.value || "").trim(), activePet:elActivePet.value || "", pets:pets }
       };
+      // key 只在有输入时随本次保存发送；本地永不保留明文
+      var sendCfg = (dsKey || dbKey) ? { moods:cfg.moods, pics:cfg.pics, agent:cfg.agent, keys:{ deepseek:dsKey, doubao:dbKey } } : cfg;
       status("保存中…");
-      postConfig(cfg, function(ok, info){ if(ok){ status("已保存并同步 ✓", "ok"); applyConfig(cfg, true); } else { status("失败：" + info, "err"); } });
+      postConfig(sendCfg, function(ok, info){
+        if(ok){
+          status("已保存并同步 ✓", "ok");
+          applyConfig(cfg, true);
+          if(info && info.keys){ window.APP_CONFIG.keys = info.keys; }   // 后端回传的"设没设"布尔
+          renderKeys();                                                  // 刷新状态 + 清空输入框
+        } else { status("失败：" + info, "err"); }
+      });
     }
 
     document.getElementById("cfgClose").addEventListener("click", close);
