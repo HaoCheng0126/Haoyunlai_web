@@ -3293,7 +3293,7 @@
     }
     // AI 内核：两个入口共用（小气泡 + 唠嗑 tab），维护同一条 petHistory/记忆
     function askPet(msg, done, brief){
-      petHistory.push({ role:"user", content:msg }); petHistory=petHistory.slice(-100);
+      petHistory.push({ role:"user", content:msg }); petHistory=petHistory.slice(-30);
       var d=new Date(), hhmm=("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2);
       var wx = window.petWeather ? ("\n【成都武侯区实时天气】" + window.petWeather + "（真实数据，ta 问天气就照这个答，别自己编）") : "";
       var sys = "你和 DeepSeek 本体一样聪明能干、有求必应——写计划、做推荐、讲笑话、出主意、答疑解惑，什么都能认真做好、做到位。下面给你的只是一层「说话风格/人设」，那是你的声音，绝不削弱你的真实能力。"
@@ -3303,15 +3303,15 @@
         + "\n【一起玩·游戏模式】ta 想玩游戏时，先问 ta 玩啥，可以推荐这几个、也能玩 ta 说的任何别的：①海龟汤=你想一个诡异但有合理解释的小故事，只把谜面告诉 ta，藏住答案(汤底)；ta 问是非题你只答「是/不是/不重要」，一步步引导，猜到就揭晓。②成语接龙=轮流说成语，下一个头字接上一个尾字(谐音也行)，接不上算输。③猜数字=你心里定个 1~100 的数、自己记牢别说出来，ta 猜你只回「大了/小了/猜中(第几次)」。主持铁律：一次只推进一步、等 ta 回应再继续，绝不自问自答把整局演完；ta 说「退出/不玩了」就结束、回到平时。"
         + "\n【你的说话风格】" + CHAR
         + "\n【关于小主人】" + memoBlock() + "。现在 " + hhmm + "，" + scheduleLine() + "。" + wx
-        + (brief ? "\n【本次务必简短】现在是气泡快聊，一两句话说完，别长篇。" : "")
+        + (brief ? "\n【本次务必简短】现在是气泡快聊，一两句话、控制在 80 字以内说完，别长篇。" : "")
         + "\n只输出 JSON：{\"reply\":\"你的回话\",\"name\":\"ta 说了自己叫啥/想被叫啥就填、否则空串\",\"remember\":[\"ta 是谁、性格特点、喜好、在意的人和事、生活习惯、对你的调教要求——凡是值得长期记住的都填简短短语(可多条)、否则空数组\"]}";
-      function finishOK(reply){ petHistory.push({ role:"assistant", content:reply }); petHistory=petHistory.slice(-100); mem.affinity=(mem.affinity||0)+1; saveMem(); done(reply, /跳舞|蹦迪|dance|来个舞|跳个舞|扭一个/i.test(msg)); }
+      function finishOK(reply){ petHistory.push({ role:"assistant", content:reply }); petHistory=petHistory.slice(-30); mem.affinity=(mem.affinity||0)+1; saveMem(); done(reply, /跳舞|蹦迪|dance|来个舞|跳个舞|扭一个/i.test(msg)); }
       function attempt(n){
         var ctrl=("AbortController" in window)?new AbortController():null;
         var timer=ctrl?setTimeout(function(){ ctrl.abort(); },40000):null;
         var dbg = "";
         fetch(AI_URL, { method:"POST", headers:{ "Content-Type":"application/json" }, signal:ctrl?ctrl.signal:undefined,
-          body: JSON.stringify({ model:"doubao-seed-2-0-mini-260428", response_format:{ type:"json_object" }, messages:[{role:"system",content:sys}].concat(petHistory.slice(-100)), temperature:(n>1?0.9:1.15), max_tokens:(brief?160:1000), stream:false }) })
+          body: JSON.stringify({ model:"doubao-seed-2-0-mini-260428", thinking:{ type:"disabled" }, response_format:{ type:"json_object" }, messages:[{role:"system",content:sys}].concat(petHistory.slice(-30)), temperature:(n>1?0.9:1.15), max_tokens:(brief?140:1000), stream:false }) })
           .then(function(r){ if(!r.ok){ dbg = "HTTP " + r.status; return r.text().then(function(b){ if(r.status===402 || /[Bb]alance|余额|欠费/.test(b)) dbg += "·余额不足💰"; else if(r.status===503 || /limit/i.test(b)) dbg += "·限流"; else if(r.status===401 || /invalid|auth|api.?key/i.test(b)) dbg += "·key无效"; else if(r.status===404) dbg += "·代理没配好"; return null; }, function(){ return null; }); } return r.json(); })
           .then(function(j){ if(j === null) return null; var t=(j&&j.choices&&j.choices[0]&&j.choices[0].message&&j.choices[0].message.content||"").trim(); if(!t){ dbg = dbg || "AI 返回空"; return null; } return t; })
           .catch(function(){ if(!dbg) dbg = "连不上/超时"; return null; })
