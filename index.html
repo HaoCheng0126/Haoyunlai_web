@@ -1482,6 +1482,7 @@
   var FOOD_BATCH = 10;       // restaurants shown per wheel (legibility)
   var foodPoolAll = [];      // all fetched restaurants, scored+sorted
   var foodPool = [];         // category-filtered display pool
+  var lastCenter = null;     // 上次解析出的坐标，切品类时重搜复用（不重新定位）
   var foodBatch = 0;         // current batch index (for 换一批)
   var foodSearchNote = "";   // e.g. coarse-geo / relaxed note
   var foodCat = "all";       // all | food | drink
@@ -1686,9 +1687,10 @@
 
   function searchNearby(AMap, center){
     var radius = parseInt(foodRadius.value, 10) || 3000;
+    var stype = catTypes();
     function page(idx, required){
       return new Promise(function(resolve, reject){
-        var ps = new AMap.PlaceSearch({ type:"餐饮服务", pageSize:25, pageIndex:idx, extensions:"all" });
+        var ps = new AMap.PlaceSearch({ type:stype, pageSize:25, pageIndex:idx, extensions:"all" });
         ps.searchNearBy("", center, radius, function(status, result){
           if(status === "complete"){ resolve((result && result.poiList && result.poiList.pois) ? result.poiList.pois : []); }
           else if(status === "no_data"){ resolve([]); }
@@ -1792,8 +1794,8 @@
 
     loadAmap().then(function(AMap){
       return resolveCenter(AMap, kind, addr).then(function(center){
-        usedCenter = center;
-        setFoodStatus("正在搜附近餐厅…");
+        usedCenter = center; lastCenter = center;
+        setFoodStatus("正在搜附近的" + (catLabel() || "餐厅") + "…");
         return searchNearby(AMap, center);
       });
     }).then(function(pois){
@@ -1811,6 +1813,31 @@
     }).catch(function(err){
       handleFoodError(err);
     }).then(function(){
+      foodBusy = false;
+      setFoodControlsDisabled(false);
+    });
+  }
+
+  // 切换品类时用已解析的坐标按新品类重搜（不重新定位）
+  function researchCurrentCat(){
+    if(foodBusy || !lastCenter) return;
+    foodBusy = true;
+    setFoodControlsDisabled(true);
+    setFoodStatus("正在搜附近的" + (catLabel() || "餐厅") + "…");
+    loadAmap().then(function(AMap){
+      return searchNearby(AMap, lastCenter);
+    }).then(function(pois){
+      if(!pois || !pois.length){
+        foodPoolAll = []; foodPool = [];
+        foodWheel.setItems([], foodLabel); updateFoodBtn(); foodMore.hidden = true;
+        setFoodStatus("附近没搜到「" + (catLabel() || "餐厅") + "」，换个类型或扩大范围 🍽️", true);
+        return;
+      }
+      foodPoolAll = pois.map(function(p){ return { poi:p, w:scorePoi(p, selectedMood) }; })
+                        .sort(function(a, b){ return b.w - a.w; });
+      applyCatFilter();
+      showFoodBatch();
+    }).catch(function(err){ handleFoodError(err); }).then(function(){
       foodBusy = false;
       setFoodControlsDisabled(false);
     });
@@ -1961,6 +1988,13 @@
   var RE_DESSERT = /甜品|甜点|糕|面包|烘焙|吐司|泡芙|布丁|可丽饼|华夫|班戟|慕斯|舒芙蕾|提拉米苏|马卡龙|冰淇淋|冰激凌|雪糕|糖水|甜甜圈|饼房|dessert|bakery/i;
   var RE_DRINK   = /咖啡|奶茶|茶饮|茶艺|茶楼|水吧|饮品|饮料|果汁|冷饮|奶昔|气泡水|柠檬茶|鲜奶|奶盖|coffee|tea/i;
 
+  // 品类 → 高德 POI 分类编码：直接按类搜，避免"搜大类再客户端过滤"把饮品/甜品挤没（范围越大越明显）
+  function catTypes(){
+    if(foodCat === "drink")   return "050500|050600|050700";        // 咖啡厅|茶艺馆|冷饮店(含奶茶)
+    if(foodCat === "dessert") return "050800|050900";               // 糕饼店|甜品店
+    if(foodCat === "food")    return "050100|050200|050300|050400"; // 中餐|外国餐|快餐|休闲餐饮
+    return "050000";                                                 // 全部 = 餐饮服务大类
+  }
   function catMatch(poi){
     if(foodCat === "all") return true;
     var t = poiText(poi);
@@ -1981,7 +2015,7 @@
     showFoodBatch();
   }
   function applyCatFilter(){
-    foodPool = (foodCat === "all") ? foodPoolAll.slice() : foodPoolAll.filter(function(x){ return catMatch(x.poi); });
+    foodPool = foodPoolAll.slice();   // 搜索已按品类编码取回，无需再客户端过滤
     foodBatch = 0;
   }
 
@@ -2216,7 +2250,7 @@
         foodCat = seg.dataset.cat;
         segs.forEach(function(s){ var o = s === seg; s.classList.toggle("active", o); s.setAttribute("aria-selected", o ? "true" : "false"); });
         var p = loadPrefs(); p.cat = foodCat; savePrefs(p);
-        if(foodPoolAll.length){ applyCatFilter(); showFoodBatch(); }
+        if(lastCenter){ researchCurrentCat(); }        // 按新品类重搜（复用坐标）
       });
     });
   }
